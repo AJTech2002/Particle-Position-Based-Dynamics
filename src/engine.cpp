@@ -1,211 +1,74 @@
 #include "engine/engine.h"
-#include "shaders/simple.glsl.h"
-#include "shaders/compute.glsl.h"
+#include "tfn/renderer.h"
+#include "tfn/grid.h"
 #include <cstdlib>
 #include <iostream>
 
 namespace game
 {
+  const unsigned int SCR_WIDTH = 800;
+  const unsigned int SCR_HEIGHT = 800;
+  const unsigned int GRID_WIDTH = 100;
+  const unsigned int GRID_HEIGHT = 100;
 
-  static struct
-  {
-    sg_pass_action passAction;
-    sg_pipeline pip;
-    sg_bindings bindings;
-  } state;
-
-
-  sg_buffer storageBuffer;
-  sg_bindings computeBindings;
-  sg_pipeline computePipeline;
-  sg_attachments atts;
-
-  static constexpr int WIDTH = 400;
-
-  particle grid[WIDTH * WIDTH];
+  tfn::ComputeRenderer renderer;
+  tfn::ParticleGrid grid(GRID_WIDTH, GRID_HEIGHT);
 
   void Engine::init(void)
   {
-    sg_desc desc = {
-        .environment = sglue_environment(),
-        .logger = {.func = slog_func}};
-    sg_setup(&desc);
+    renderer.init(GRID_WIDTH, GRID_HEIGHT);
+  }
 
-    sg_image_desc img_desc = {
-        // .render_target = true, // allows imageStore/imageLoad
-        .usage = {
-            // .stream_update = true,
-            .storage_attachment = true,
-        },
+  int brushType = 0; // 0 empty, 1 solid, 2 liquid, 3 sand
+  bool pressingBrush = false;
+  bool mouseDown = false;
+  int brushSize = 1; // Default brush size
+  int _frame = 0;
+  float mx = 0.0f;
+  float my = 0.0f;
 
-        .width = WIDTH,
-        .height = WIDTH,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-    };
+  void Engine::frame(void)
+  {
 
-    sg_sampler_desc samp_desc = {
-        .min_filter = SG_FILTER_NEAREST,
-        .mag_filter = SG_FILTER_NEAREST,
-        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-    };
-
-    sg_sampler sampler = sg_make_sampler(&samp_desc);
-    sg_image dest_image = sg_make_image(&img_desc);
-
-
-    state.passAction = (sg_pass_action){
-        .colors[0] = {.load_action = SG_LOADACTION_CLEAR, .clear_value = {0.2f, 0.3f, 0.3f, 1.0f}}};
-
-    sg_shader shd = sg_make_shader(simple_shader_desc(sg_query_backend()));
-
-    float vertices[] = {
-        // positions
-        1.0f, 1.0f, 0.0f,   // top right
-        1.0f, -1.0f, 0.0f,  // bottom right
-        -1.0f, -1.0f, 0.0f, // bottom left
-        -1.0f, 1.0f, 0.0f   // top left
-    };
-
-    sg_buffer_desc vertexBufferDesc = {
-        .size = sizeof(vertices),
-        .data = SG_RANGE(vertices),
-        .label = "quad-vertices"};
-
-    state.bindings.vertex_buffers[0] = sg_make_buffer(&vertexBufferDesc);
-
-    uint16_t indices[] = {
-        0, 1, 3, // first triangle
-        1, 2, 3  // second triangle
-    };
-
-    sg_buffer_desc indexBufferDesc = {
-        .size = sizeof(indices),
-        .data = SG_RANGE(indices),
-        .label = "quad-indices",
-        .usage = {
-            .index_buffer = true}};
-
-    state.bindings.index_buffer = sg_make_buffer(&indexBufferDesc);
-    state.bindings.images[0] = dest_image;
-    state.bindings.samplers[0] = sampler;
-
-    sg_pipeline_desc pipelineDesc = {
-        .shader = shd,
-        .index_type = SG_INDEXTYPE_UINT16,
-        .layout = {
-            .attrs = {
-                [ATTR_simple_position].format = SG_VERTEXFORMAT_FLOAT3}},
-        .label = "quad-pipeline"};
-
-    state.pip = sg_make_pipeline(&pipelineDesc);
-
-    state.passAction = (sg_pass_action){
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR, .clear_value = {0.2f, 0.3f, 0.3f, 1.0f}}};
-
-    sg_buffer_desc buf_desc = {
-        .size = sizeof(grid),
-        .usage = {
-            .storage_buffer = true,
-            .dynamic_update = true,
-        },
-    };
-
-    storageBuffer = sg_make_buffer(&buf_desc);
-
-    computeBindings.storage_buffers[1] = storageBuffer;
-
-    sg_attachments_desc atts_desc = {
-      .storages[0] = {
-        .image = dest_image,
-      }
-    };
-
-    atts = sg_make_attachments(&atts_desc);
-
-    sg_pipeline_desc computePipelineDesc = {
-        .compute = true,
-        .shader = sg_make_shader(compute_shader_desc(sg_query_backend())),
-        .label = "compute-pipeline"};
-
-    computePipeline = sg_make_pipeline(computePipelineDesc);
-
-
-    particle randomGrid[WIDTH * WIDTH];
-    for (int x = 0; x < WIDTH; x++)
+    if (mouseDown)
     {
-      for (int y = 0; y < WIDTH; y++)
+      int x = static_cast<int>(mx * GRID_WIDTH / sapp_width());
+      int y = GRID_HEIGHT - static_cast<int>(my * GRID_HEIGHT / sapp_height());
+
+      if (x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT)
       {
-        int index = x + (y * WIDTH);
-        if (x == 100 || y == 20) {
-          randomGrid[index].type = 1; // Blue particle
-          
+        int brushSize = 1;
+
+        if (brushSize > 1)
+        {
+          for (int i = -brushSize; i <= brushSize; ++i)
+          {
+            for (int j = -brushSize; j <= brushSize; ++j)
+            {
+              int nx = x + i;
+              int ny = y + j;
+              if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT)
+              {
+                grid.addParticle(nx, ny, brushType);
+              }
+            }
+          }
         }
-        else {
-          randomGrid[index].type = 0;
+        else
+        {
+          grid.addParticle(x, y, brushType);
         }
       }
     }
 
-    this->updateGrid(randomGrid);
+    // if (_frame % 10 == 0)
+      grid.update();
 
-  }
+    // if (_frame % 11 == 0)
+      renderer.update(grid.display);
 
-  void Engine::updateGrid(particle* newGrid)
-  {
-    // Update storage buffer
-    sg_range data = {
-        .ptr = newGrid,                   // pointer to CPU data
-        .size = sizeof(particle) * (WIDTH * WIDTH) // size of the data
-    };
-    sg_update_buffer(storageBuffer, &data);
-  }
-
-  struct alignas(16) UniformParams
-  {
-    int width;
-  };
-
-  UniformParams params = {
-      .width = WIDTH
-  };
-
-  void Engine::frame(void)
-  {
-    sg_pass pass = {
-        .action = state.passAction,
-        .swapchain = sglue_swapchain(),
-    };
-
-    sg_pass computePass = {.compute = true, .label = "compute-pass", .attachments = atts};
-
-    sg_begin_pass(&computePass);
-
-    sg_apply_pipeline(computePipeline);
-    sg_apply_bindings(&computeBindings);
-
-    // Dispatch compute shader
-    int width = WIDTH;
-    int height = WIDTH;
-    int numGroupsX = (width + 15) / 16;  // Assuming local_size_x = 16
-    int numGroupsY = (height + 15) / 16; // Assuming local_size_y = 16
-
-    sg_apply_uniforms(2, { .ptr = &params, .size = sizeof(UniformParams) });
-
-    sg_dispatch(numGroupsX, numGroupsY, 1);
-
-    sg_end_pass();
-
-    sg_begin_pass(&pass);
-
-    sg_apply_pipeline(state.pip);
-    sg_apply_bindings(&state.bindings);
-
-    sg_draw(0, 6, 1);
-
-    sg_end_pass();
-    sg_commit();
+    renderer.render();
+    _frame++;
   }
 
   void Engine::cleanup(void)
@@ -215,12 +78,67 @@ namespace game
 
   void Engine::event(const sapp_event *event)
   {
-    if (event->type == SAPP_EVENTTYPE_KEY_DOWN)
+    switch (event->type)
     {
+    case SAPP_EVENTTYPE_KEY_DOWN:
       if (event->key_code == SAPP_KEYCODE_ESCAPE)
       {
         sapp_request_quit();
       }
+
+      if (event->key_code == SAPP_KEYCODE_B && !pressingBrush)
+      {
+        pressingBrush = true;
+        brushType = (brushType + 1) % 4;
+
+        switch (brushType)
+        {
+        case 0:
+          std::cout << "Brush set to EMPTY_CELL\n";
+          break;
+        case 1:
+          std::cout << "Brush set to SOLID_CELL\n";
+          break;
+        case 2:
+          std::cout << "Brush set to LIQUID_CELL\n";
+          break;
+        case 3:
+          std::cout << "Brush set to SAND_CELL\n";
+          break;
+        }
+      }
+      break;
+
+    case SAPP_EVENTTYPE_KEY_UP:
+      if (event->key_code == SAPP_KEYCODE_B)
+      {
+        pressingBrush = false;
+      }
+      break;
+
+    case SAPP_EVENTTYPE_MOUSE_DOWN:
+      if (event->mouse_button == SAPP_MOUSEBUTTON_LEFT)
+      {
+        mouseDown = true;
+      }
+      break;
+
+    case SAPP_EVENTTYPE_MOUSE_UP:
+      if (event->mouse_button == SAPP_MOUSEBUTTON_LEFT)
+      {
+        mouseDown = false;
+      }
+      break;
+
+    case SAPP_EVENTTYPE_MOUSE_MOVE:
+      if (mouseDown)
+      {
+        mx = event->mouse_x;
+        my = event->mouse_y;
+      }
+
+    default:
+      break;
     }
   }
 

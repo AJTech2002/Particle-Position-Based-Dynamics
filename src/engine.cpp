@@ -22,7 +22,7 @@ namespace game
   int brushType = 0; // 0 empty, 1 solid, 2 liquid, 3 sand
   bool pressingBrush = false;
   bool mouseDown = false;
-  int brushSize = 1; // Default brush size
+  int brushSize = 3; // Default brush size
   int _frame = 0;
   float mx = 0.0f;
   float my = 0.0f;

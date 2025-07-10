@@ -19,7 +19,9 @@ layout(rgba8, binding = 0) uniform writeonly image2D destImage;
 layout(std430, binding=1) readonly buffer cs_ssbo_in { particle particles[]; };
 
 
-int width = 400; // Width of the particle grid, assume square
+layout(std140, binding = 2) uniform Params {
+    int width;
+};
 
 void main() {
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);

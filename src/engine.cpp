@@ -162,6 +162,15 @@ namespace game
     sg_update_buffer(storageBuffer, &data);
   }
 
+  struct alignas(16) UniformParams
+  {
+    int width;
+  };
+
+  UniformParams params = {
+      .width = WIDTH
+  };
+
   void Engine::frame(void)
   {
     sg_pass pass = {
@@ -181,6 +190,8 @@ namespace game
     int height = WIDTH;
     int numGroupsX = (width + 15) / 16;  // Assuming local_size_x = 16
     int numGroupsY = (height + 15) / 16; // Assuming local_size_y = 16
+
+    sg_apply_uniforms(2, { .ptr = &params, .size = sizeof(UniformParams) });
 
     sg_dispatch(numGroupsX, numGroupsY, 1);
 

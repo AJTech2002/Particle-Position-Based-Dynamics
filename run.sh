@@ -1,0 +1,1 @@
+./compileShaders.sh && cmake --build ./build && ./build/SokolTest

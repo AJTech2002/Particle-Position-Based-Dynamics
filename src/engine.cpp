@@ -8,8 +8,8 @@ namespace game
 {
   const unsigned int SCR_WIDTH = 800;
   const unsigned int SCR_HEIGHT = 800;
-  const unsigned int GRID_WIDTH = 100;
-  const unsigned int GRID_HEIGHT = 100;
+  const unsigned int GRID_WIDTH = 400;
+  const unsigned int GRID_HEIGHT = 400;
 
   tfn::ComputeRenderer renderer;
   tfn::ParticleGrid grid(GRID_WIDTH, GRID_HEIGHT);
@@ -37,7 +37,6 @@ namespace game
 
       if (x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT)
       {
-        int brushSize = 1;
 
         if (brushSize > 1)
         {
@@ -73,6 +72,7 @@ namespace game
 
   void Engine::cleanup(void)
   {
+    grid.cleanup(); // Clean up particles in the grid
     sg_shutdown();
   }
 

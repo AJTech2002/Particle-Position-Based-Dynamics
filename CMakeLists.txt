@@ -11,7 +11,9 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 ## Find all files in the src directory
-file(GLOB SOURCES "src/*.mm" "src/*.cpp" "src/*.h")
+# file(GLOB SOURCES "src/*.mm" "src/*.cpp" "src/*.h")
+file(GLOB_RECURSE SOURCES "src/*.mm" "src/*.cpp" "src/*.h")
+
 set_source_files_properties(src/main.mm PROPERTIES LANGUAGE OBJCXX)
 add_executable(SokolTest ${SOURCES})
 

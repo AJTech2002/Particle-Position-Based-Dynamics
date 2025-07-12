@@ -5,10 +5,16 @@
 #include <vector>
 #include <unordered_map>
 
+// Particle types
+#include "tfn/particles/sand_particle.h"
+#include "tfn/particles/liquid_particle.h"
+#include "tfn/particles/solid_particle.h"
+
 namespace tfn
 {
     struct Cell
     {
+        Particle* lastParticle = nullptr; // Pointer to the last particle added to this cell
         Particle *particle = nullptr; // Pointer to the particle in this cell, if any
     };
 
@@ -21,7 +27,7 @@ namespace tfn
     {
     private:
         Cell *cells;
-        std::vector<Particle> particles;
+        std::vector<Particle*> particles;
 
     public:
         unsigned int width;
@@ -60,23 +66,23 @@ namespace tfn
             {
                 return getCells()[y * width + x];
             }
-            throw std::out_of_range("Grid coordinates out of bounds");
+            throw std::out_of_range("Grid coordinates out of bounds (getCell)");
         }
 
-        void setCell(unsigned int x, unsigned int y, Particle &particle)
+        void setCell(unsigned int x, unsigned int y, Particle* particle)
         {
             if (x < width && y < height)
             {
-                getCell(x, y).particle = &particle; // Set the particle pointer in the cell
-                display[y * width + x].type = particle.type; // Update display cell type
+                getCell(x, y).particle = particle; // Set the particle pointer in the cell
+                display[y * width + x].type = particle->type; // Update display cell type
             }
             else
             {
-                throw std::out_of_range("Grid coordinates out of bounds");
+                throw std::out_of_range("Grid coordinates out of bounds (setCell)");
             }
         }
 
-        const std::vector<Particle> &getParticles()
+        const std::vector<Particle*>& getParticles()
         {
             return particles;
         }
@@ -91,13 +97,38 @@ namespace tfn
             return nullptr; // No particle found at the given coordinates
         }
 
+        Particle *getOldParticle(unsigned int x, unsigned int y)
+        {
+            if (x < width && y < height)
+            {
+                int index = cellIndex(x, y);
+                return getCells()[index].lastParticle;
+            }
+            return nullptr; // No particle found at the given coordinates
+        }
+
         const int cellIndex(unsigned int x, unsigned int y) const
         {
             if (x < width && y < height)
             {
                 return y * width + x;
             }
-            throw std::out_of_range("Grid coordinates out of bounds");
+            throw std::out_of_range("Grid coordinates out of bounds (cellIndex)");
+        }
+
+        Particle* createParticle (int x, int y, int type) {
+          switch (type) {
+            case tfn::consts::EMPTY_CELL:
+              return new Particle(x, y, type);
+            case tfn::consts::SOLID_CELL:
+              return new tfn::particles::SolidParticle(x, y, type);
+            case tfn::consts::LIQUID_CELL:
+              return new tfn::particles::LiquidParticle(x, y, type);
+            case tfn::consts::SAND_CELL:
+              return new tfn::particles::SandParticle(x, y, type);
+            default:
+              throw std::invalid_argument("Unknown particle type");
+          }
         }
 
         void addParticle(unsigned int x, unsigned int y, int type)
@@ -110,10 +141,14 @@ namespace tfn
 
             if (x < width && y < height)
             {
-                particles.emplace_back(x, y, type);
-                Particle &newParticle = particles.back();
-                newParticle.grid = this;
-                getCell(x, y).particle = &newParticle; // Set the particle pointer in the cell
+                // particles.emplace_back(x, y, type);
+                // Particle &newParticle = particles.back();
+
+                Particle* newParticle = createParticle(x, y, type);
+                particles.push_back(newParticle); // Add the new particle to the vector
+                newParticle->grid = this;
+
+                getCell(x, y).particle = newParticle; // Set the particle pointer in the cell
                 return;
             }
 
@@ -130,11 +165,22 @@ namespace tfn
             for (unsigned int i = 0; i < width * height; ++i)
             {
                 display[i].type = tfn::consts::EMPTY_CELL;
+
+                if (cells[i].particle != nullptr) cells[i].particle->hasUpdated = false;
+
+                cells[i].lastParticle = cells[i].particle; // Store the last particle before clearing
                 cells[i].particle = nullptr; // Clear the particle pointer in the cell
             }
         }
 
         void update();
+
+        void cleanup() {
+            for (auto particle : particles) {
+                delete particle; // Clean up each particle
+            }
+            particles.clear(); // Clear the vector of particles
+        }
     };
 
 }

@@ -3,7 +3,7 @@
 #include "tfn/grid.h"
 #include "shaders/simple.glsl.h"
 #include "shaders/compute.glsl.h"
-#include "engine/debug/debug.h"
+#include "engine/debug.h"
 
 static struct
 {
@@ -181,12 +181,11 @@ void tfn::ComputeRenderer::render()
   sgl_load_identity();
 
   // Handle Debugger
-  tfn::Debug::getInstance().render();
 
   sgl_push_pipeline();
   sgl_ortho(-(float)_SCR_WIDTH/2, (float)_SCR_WIDTH/2, -(float)_SCR_HEIGHT/2, (float)_SCR_HEIGHT/2, -1.0, 1.0);
   sgl_viewport(0, 0, _SCR_WIDTH, _SCR_HEIGHT, true);
-
+  tfn::Debug::getInstance().render();
   sgl_pop_pipeline();
 
   sg_begin_pass(&computePass);

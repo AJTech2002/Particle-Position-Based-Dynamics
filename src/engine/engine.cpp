@@ -1,4 +1,6 @@
 #include "engine/engine.h"
+#include "engine/physics.h"
+#include "engine/debug.h"
 #include "tfn/renderer.h"
 #include "tfn/grid.h"
 #include <cstdlib>
@@ -13,10 +15,12 @@ namespace game
 
   tfn::ComputeRenderer renderer;
   tfn::ParticleGrid particleGrid(GRID_WIDTH, GRID_HEIGHT);
+  physics::Solver solver;
 
   void Engine::init(void)
   {
     renderer.init(SCR_WIDTH, SCR_HEIGHT, GRID_WIDTH, GRID_HEIGHT);
+    solver.init();
   }
 
   int brushType = 0; // 0 empty, 1 solid, 2 liquid, 3 sand
@@ -63,9 +67,14 @@ namespace game
       }
     }
 
+    solver.simulate(dt);
+    solver.debugDraw();
+
     particleGrid.update();
+    
     renderer.update(particleGrid.display);
     renderer.render();
+    
     _frame++;
   }
 

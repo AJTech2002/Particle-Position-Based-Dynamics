@@ -48,6 +48,8 @@ namespace tfn
       }
      
       static void drawLine(glm::vec2 from, glm::vec2 to, glm::vec3 col = glm::vec3(1,0,0));
+      static void drawSquare(glm::vec2 center, glm::vec2 extent, glm::vec3 col = glm::vec3(1,0,0));
+
       void render();
     private:
       int debugBufferCount;

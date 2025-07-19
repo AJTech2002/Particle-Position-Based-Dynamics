@@ -3,7 +3,6 @@
 #define ENGINE_ENGINE_H
 
 #include "sokol/sokol_all.h"
-
   
   
 namespace game {

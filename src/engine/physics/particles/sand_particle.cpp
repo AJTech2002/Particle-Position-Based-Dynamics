@@ -46,9 +46,11 @@ bool SandParticle::canMove(tfn::Direction dir)
   }
 
   Particle *oldNeighbor = getOldNeighbour(dir);
+  Particle *newNeighbor = grid->getParticle(newX, newY);
 
   // Can move into liquids
-  return oldNeighbor == nullptr || oldNeighbor->type == tfn::consts::LIQUID_CELL;
+  return ((oldNeighbor == nullptr || oldNeighbor->type == tfn::consts::LIQUID_CELL) &&
+          (newNeighbor == nullptr || newNeighbor->type == tfn::consts::LIQUID_CELL));
 }
 
 void SandParticle::simulate()
@@ -67,32 +69,10 @@ void SandParticle::simulate()
     Particle *liquidParticle = grid->getParticle(newX, newY);
     if (liquidParticle && liquidParticle->type == tfn::consts::LIQUID_CELL)
     {
-      // Try to move the liquid left or right
-      bool moved = false;
-      std::pair<int, int> left = getDirectionOffset(tfn::Direction::LEFT);
-      std::pair<int, int> right = getDirectionOffset(tfn::Direction::RIGHT);
-
-      if (grid->inBounds(x + left.first, y + left.second) &&
-          grid->getParticle(x + left.first, y + left.second) == nullptr)
-      {
-        liquidParticle->x = x + left.first;
-        liquidParticle->y = y + left.second;
-        moved = true;
-      }
-      else if (grid->inBounds(x + right.first, y + right.second) &&
-              grid->getParticle(x + right.first, y + right.second) == nullptr)
-      {
-        liquidParticle->x = x + right.first;
-        liquidParticle->y = y + right.second;
-        moved = true;
-      }
-
-      // Only swap if it moved
-      if (moved) {
-        x = newX;
-        y = newY;
-      }
-
+      liquidParticle->x = x; // Update liquid particle position
+      liquidParticle->y = y; // Update liquid particle position
+      x = newX;
+      y = newY;
       // Otherwise, treat it as blocked
     }
     else {

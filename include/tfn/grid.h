@@ -134,7 +134,8 @@ namespace tfn
         void addParticle(unsigned int x, unsigned int y, int type)
         {
             // check if particle is already present at cell indexs
-            if (getParticle(x, y) != nullptr)
+            if (getParticle(x, y) != nullptr || type == tfn::consts::EMPTY_CELL)
+                // If the cell already has a particle or is empty, do not add a new one
             {
                 return;
             }

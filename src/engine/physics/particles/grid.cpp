@@ -1,6 +1,5 @@
 #include "tfn/grid.h"
 #include "tfn/particle.h"
-#include <iostream>
 #include <random>
 
 static std::mt19937 rng(std::random_device{}());
@@ -8,7 +7,8 @@ static std::mt19937 rng(std::random_device{}());
 void tfn::ParticleGrid::update() {
     this->clear();
 
-    // std::cout << particles.size() << " particles to update." << std::endl;
+    // TODO: Implement a more sophisticated update logic
+    // Randomize so that particles don't create a predictable pattern
     std::shuffle(particles.begin(), particles.end(), rng);
 
     for (auto& particle : particles) {

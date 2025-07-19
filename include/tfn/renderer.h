@@ -7,7 +7,7 @@ namespace tfn {
     
     class ComputeRenderer {
         public:
-            void init(unsigned int SCR_WIDTH, unsigned int SCR_HEIGHT);
+            void init(unsigned int SCR_WIDTH, unsigned int SCR_HEIGHT, unsigned int GRID_WIDTH, unsigned int GRID_HEIGHT);
             void render();
             void update(tfn::DisplayCell* cells);
 

@@ -14,7 +14,6 @@ bool tfn::Particle::canMove(tfn::Direction dir)
 
     Particle *neighbor = getNeighbor(dir);
     Particle *oldNeighbor = getOldNeighbour(dir);
-
     return oldNeighbor == nullptr && neighbor == nullptr; // Assuming type 0 is empty
 }
 

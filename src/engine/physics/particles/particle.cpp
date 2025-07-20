@@ -1,6 +1,10 @@
 #include "tfn/grid.h"
 #include "tfn/particle.h"
 
+void tfn::Particle::assign() {
+  grid->setCell(x,y,this);
+}
+
 bool tfn::Particle::canMove(tfn::Direction dir)
 {
     std::pair<int, int> offset = getDirectionOffset(dir);

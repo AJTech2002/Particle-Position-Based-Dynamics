@@ -183,7 +183,8 @@ void tfn::ComputeRenderer::render()
   // Handle Debugger
 
   sgl_push_pipeline();
-  sgl_ortho(-(float)_SCR_WIDTH/2, (float)_SCR_WIDTH/2, -(float)_SCR_HEIGHT/2, (float)_SCR_HEIGHT/2, -1.0, 1.0);
+  /*sgl_ortho(-(float)W/2, (float)W/2, -(float)H/2, (float)H/2, -1.0, 1.0);*/
+  sgl_ortho(0, W, 0, H, -1.0, 1.0);
   sgl_viewport(0, 0, _SCR_WIDTH, _SCR_HEIGHT, true);
   tfn::Debug::getInstance().render();
   sgl_pop_pipeline();

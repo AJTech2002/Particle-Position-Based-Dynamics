@@ -131,13 +131,13 @@ namespace tfn
           }
         }
 
-        void addParticle(unsigned int x, unsigned int y, int type)
+        Particle* addParticle(unsigned int x, unsigned int y, int type)
         {
             // check if particle is already present at cell indexs
             if (getParticle(x, y) != nullptr || type == tfn::consts::EMPTY_CELL)
                 // If the cell already has a particle or is empty, do not add a new one
             {
-                return;
+                return nullptr;
             }
 
             if (x < width && y < height)
@@ -150,7 +150,7 @@ namespace tfn
                 newParticle->grid = this;
 
                 getCell(x, y).particle = newParticle; // Set the particle pointer in the cell
-                return;
+                return newParticle;
             }
 
             throw std::out_of_range("Particle coordinates out of bounds");

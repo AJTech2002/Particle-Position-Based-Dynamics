@@ -5,6 +5,7 @@
 #include "tfn/grid.h"
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
 namespace game
 {
@@ -32,6 +33,8 @@ namespace game
   float my = 0.0f;
   float dt = 0.0f;
 
+  std::vector<tfn::Particle*> solidParticles;
+
   void Engine::frame(void)
   {
 
@@ -55,22 +58,38 @@ namespace game
               int ny = y + j;
               if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT)
               {
-                particleGrid.addParticle(nx, ny, brushType);
+                tfn::Particle* particle = particleGrid.addParticle(nx, ny, brushType);
+                if (brushType == 1) {
+                  if (particle != nullptr)
+                    solidParticles.push_back(particle);
+                }
               }
             }
           }
         }
         else
         {
-          particleGrid.addParticle(x, y, brushType);
+          tfn::Particle* particle = particleGrid.addParticle(x, y, brushType);
+          if (brushType == 1) {
+            if (particle != nullptr)
+              solidParticles.push_back(particle);
+          }
         }
+      }
+    }
+    else {
+      if (solidParticles.size() > 0) {
+        solver.createBodyFromPoints(solidParticles);
+        solidParticles.clear();
       }
     }
 
     solver.simulate(dt);
     solver.debugDraw();
 
+    solver.propogate();
     particleGrid.update();
+    solver.propogate();
     
     renderer.update(particleGrid.display);
     renderer.render();
@@ -127,6 +146,7 @@ namespace game
       case SAPP_EVENTTYPE_MOUSE_DOWN:
         if (event->mouse_button == SAPP_MOUSEBUTTON_LEFT)
         {
+          solidParticles.clear();
           mouseDown = true;
         }
         break;
@@ -135,15 +155,14 @@ namespace game
         if (event->mouse_button == SAPP_MOUSEBUTTON_LEFT)
         {
           mouseDown = false;
+
+          // Create a RBody out of the particles
         }
         break;
 
       case SAPP_EVENTTYPE_MOUSE_MOVE:
-        if (mouseDown)
-        {
           mx = event->mouse_x;
           my = event->mouse_y;
-        }
 
       default:
         break;

@@ -54,11 +54,13 @@ namespace tfn
         int type;
         ParticleGrid *grid;
         glm::vec2 velocity = glm::vec2(0.0f, 0.0f);
+        glm::vec2 absPos = glm::vec2(0.0f, 0.0f);
 
         bool hasUpdated = false;
-        Particle(unsigned int x, unsigned int y, int type) : x(x), y(y), type(type) {}
+        Particle(unsigned int x, unsigned int y, int type) : x(x), y(y), type(type), absPos(x,y) {}
         virtual ~Particle() = default;
         virtual void simulate();
+        virtual void assign();
         virtual bool canMove(Direction dir);
         
         Particle *getNeighbor(Direction dir) const;

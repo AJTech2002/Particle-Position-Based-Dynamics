@@ -5,6 +5,13 @@
 #include "glm/glm.hpp"
 #include <vector>
 
+namespace tfn {
+  class Particle;
+  namespace particles {
+    class SolidParticle;
+  }
+}
+
 namespace physics {
 
   static constexpr unsigned int MAX_BODY_COUNT = 500;
@@ -19,7 +26,7 @@ namespace physics {
 
   struct Shape {
     std::vector<PointMass> points;
-
+    std::vector<int> mesh; // This is a tri interpretation of the mesh for keeping particles in the shape
   };
 
   enum ConstraintType {
@@ -85,16 +92,22 @@ namespace physics {
   struct SBody {
     Shape shape;
     std::vector<Constraint> constraints;
+    std::vector<tfn::particles::SolidParticle*> particles;
   };
 
   class Solver {
     public:
+      Solver();
+      ~Solver();
+    
       SBody* bodies[MAX_BODY_COUNT];
       int bodyCount;
 
       void init ();
       void simulate (float dt);
+      void propogate ();
       void debugDraw ();
+      void createBodyFromPoints (std::vector<tfn::Particle*> particle);
   };
   
 }

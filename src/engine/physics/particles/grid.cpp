@@ -15,6 +15,7 @@ void tfn::ParticleGrid::update() {
         int oldX = particle->x;
         int oldY = particle->y;
         particle->simulate();
-        setCell(particle->x, particle->y, particle);
+        if (particle->hasUpdated)
+          setCell(particle->x, particle->y, particle);
     }
 }

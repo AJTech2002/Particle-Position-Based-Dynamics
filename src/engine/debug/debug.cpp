@@ -1,10 +1,11 @@
 #include "engine/debug.h"
-#include "engine/engine.h"
+#include "vector"
 
-void tfn::Debug::drawLine (glm::vec2 from, glm::vec2 to, glm::vec3 col) {
+void tfn::Debug::drawLine (glm::vec2 from, glm::vec2 to, glm::vec3 col, float duration) {
   getInstance().submit({
       .col = col,
       .type = tfn::DebugShapeType::LINE,
+      .duration = duration,
       .shape = {
         .line = {
           .from = from,
@@ -14,10 +15,11 @@ void tfn::Debug::drawLine (glm::vec2 from, glm::vec2 to, glm::vec3 col) {
    });
 }
 
-void tfn::Debug::drawSquare (glm::vec2 center, glm::vec2 extent, glm::vec3 col) {
+void tfn::Debug::drawSquare (glm::vec2 center, glm::vec2 extent, glm::vec3 col, float duration) {
   getInstance().submit({
       .col = col,
       .type = tfn::DebugShapeType::SQUARE,
+      .duration = duration,
       .shape = {
         .square = {
           .center = center,
@@ -27,14 +29,19 @@ void tfn::Debug::drawSquare (glm::vec2 center, glm::vec2 extent, glm::vec3 col) 
   });
 };
 
-inline void tfn::Debug::submit (DebugElement el) {
+void tfn::Debug::submit (DebugElement el) {
   if (debugBufferCount < MAX_DEBUG_BUFFER) {
     debugBuffer[debugBufferCount] = el;
+    debugBuffer[debugBufferCount].startTime =   
+    this->engine->gameTime;
     debugBufferCount += 1;
   }
 }
 
 void tfn::Debug::render() {
+
+  std::vector<int> preservedElements;
+
   for (int i = 0; i < debugBufferCount; i++) {
     DebugElement element = this->debugBuffer[i];
     if (element.type == tfn::DebugShapeType::LINE) {
@@ -64,8 +71,17 @@ void tfn::Debug::render() {
       sgl_end();
 
     }
+
+    if (element.duration >= 0.01 && this->engine->gameTime - element.startTime < element.duration) {
+      preservedElements.push_back(i);
+    }
+
   }
 
   // clear memory
   debugBufferCount = 0;
+
+  for (auto& preserved : preservedElements) {
+    this->submit(debugBuffer[preserved]);
+  }
 }

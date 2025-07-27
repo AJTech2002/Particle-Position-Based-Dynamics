@@ -8,7 +8,7 @@
 
 #include "engine/engine.h"
 
-game::Engine engine;
+game::Engine& engine = game::Engine::getInstance();
 
 void init_cb()    { engine.init(); }
 void frame_cb()   { engine.frame(); }

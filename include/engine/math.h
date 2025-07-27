@@ -13,6 +13,44 @@ namespace math {
     bool inside;
   };
 
+  static float fastRand01() {
+    return (float)rand() / RAND_MAX;
+  }
+
+  static float fastRandBetween(float min, float max) {
+    return min + ((float)rand() / (float)RAND_MAX) * (max - min);
+  }
+  
+  static int randMultiplier () {
+    return rand() % 2 == 0 ? -1 : 1;
+  }
+
+  static int getLinePixels(
+      glm::ivec2 a, 
+      glm::ivec2 b,
+      glm::ivec2* out
+      ) {
+    int x0 = a.x;
+    int x1 = b.x;
+
+    int y0 = a.y;
+    int y1 = b.y;
+
+    int count = 0;
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2;
+
+    while (true) {
+      out[count++] = {x0, y0};
+      if (x0 == x1 && y0 == y1) break;
+      e2 = 2 * err;
+      if (e2 >= dy) { err += dy; x0 += sx; }
+      if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+    return count; // size of filled array
+  }
+
   static BarycentricResult barycentricFromWorld (vec2& A, vec2& B, vec2& C, vec2& P) {
     vec2 v0 = B - A;
     vec2 v1 = C - A;

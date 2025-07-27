@@ -4,7 +4,7 @@
 
 static std::mt19937 rng(std::random_device{}());
 
-void tfn::ParticleGrid::update() {
+void tfn::ParticleGrid::update(float dt) {
     this->clear();
 
     // TODO: Implement a more sophisticated update logic
@@ -14,7 +14,7 @@ void tfn::ParticleGrid::update() {
     for (auto& particle : particles) {
         int oldX = particle->x;
         int oldY = particle->y;
-        particle->simulate();
+        particle->simulate(dt);
         if (particle->hasUpdated)
           setCell(particle->x, particle->y, particle);
     }

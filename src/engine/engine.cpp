@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+#include <ctime>
+#include <cstdlib>
 
 namespace game
 {
@@ -20,8 +22,10 @@ namespace game
 
   void Engine::init(void)
   {
+    srand(static_cast<unsigned>(time(0)));
     renderer.init(SCR_WIDTH, SCR_HEIGHT, GRID_WIDTH, GRID_HEIGHT);
     solver.init();
+    tfn::Debug::getInstance().engine = this;
   }
 
   int brushType = 0; // 0 empty, 1 solid, 2 liquid, 3 sand
@@ -31,7 +35,10 @@ namespace game
   int _frame = 0;
   float mx = 0.0f;
   float my = 0.0f;
-  float dt = 0.0f;
+  bool simulate = true;
+  
+  const double fixedTimestep = 1.0 / 60.0;
+  double accumulatedFixedTimestep;
 
   std::vector<tfn::Particle*> solidParticles;
 
@@ -39,6 +46,7 @@ namespace game
   {
 
     dt = (float)sapp_frame_duration();
+    gameTime += dt;
 
     if (mouseDown)
     {
@@ -84,14 +92,22 @@ namespace game
       }
     }
 
-    solver.simulate(dt);
-    solver.debugDraw();
+    accumulatedFixedTimestep += dt;
 
-    solver.propogate();
-    particleGrid.update();
-    solver.propogate();
-    
+    while (accumulatedFixedTimestep >= fixedTimestep) {
+      if (simulate) {
+        solver.simulate(fixedTimestep);
+        
+      }
+
+      particleGrid.update(fixedTimestep);
+        solver.propogate(fixedTimestep);
+
+      accumulatedFixedTimestep -= fixedTimestep;
+    }
+
     renderer.update(particleGrid.display);
+    solver.debugDraw();
     renderer.render();
     
     _frame++;
@@ -132,6 +148,16 @@ namespace game
             case 3:
               std::cout << "Brush set to SAND_CELL\n";
               break;
+          }
+        }
+
+        if (event->key_code == SAPP_KEYCODE_P)
+        {
+          simulate = !simulate;
+          if (simulate) {
+            std::cout << "Simulation started\n";
+          } else {
+            std::cout << "Simulation paused\n";
           }
         }
         break;

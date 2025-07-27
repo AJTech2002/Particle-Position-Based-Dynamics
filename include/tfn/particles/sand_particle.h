@@ -9,7 +9,8 @@ namespace tfn::particles
     SandParticle(unsigned int x, unsigned int y, int type) : Particle(x, y, type) {}
       ~SandParticle() override;  // ✅ Add this line
 
-    void simulate() override;
+    void simulate(float dt) override;
     bool canMove(Direction dir) override;
+    bool canMove(glm::ivec2 pos) override;
   };
 }

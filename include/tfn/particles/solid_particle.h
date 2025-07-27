@@ -17,9 +17,9 @@ namespace tfn::particles
     int triIndex;
     glm::vec3 bary;
 
-    void simulate() override {
+    void simulate(float dt) override {
       if (body == nullptr)
-        Particle::simulate();
+        Particle::simulate(dt);
      
       /*if (body != nullptr) {*/
       /*  int i = triIndex * 3;*/

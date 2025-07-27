@@ -60,25 +60,25 @@ namespace tfn
             return cells;
         }
 
-        Cell &getCell(unsigned int x, unsigned int y)
+        Cell* getCell(unsigned int x, unsigned int y)
         {
             if (x < width && y < height)
             {
-                return getCells()[y * width + x];
+                return &getCells()[y * width + x];
             }
             throw std::out_of_range("Grid coordinates out of bounds (getCell)");
         }
 
-        void setCell(unsigned int x, unsigned int y, Particle* particle)
+        void setCell(int x, int y, Particle* particle)
         {
-            if (x < width && y < height)
+            if (x >= 0 && y >= 0 && x < width && y < height)
             {
-                getCell(x, y).particle = particle; // Set the particle pointer in the cell
+                getCell(x, y)->particle = particle; // Set the particle pointer in the cell
                 display[y * width + x].type = particle->type; // Update display cell type
             }
             else
             {
-                throw std::out_of_range("Grid coordinates out of bounds (setCell)");
+                /*throw std::out_of_range("Grid coordinates out of bounds (setCell)");*/
             }
         }
 
@@ -87,9 +87,9 @@ namespace tfn
             return particles;
         }
 
-        Particle *getParticle(unsigned int x, unsigned int y)
+        Particle *getParticle(int x, int y)
         {
-            if (x < width && y < height)
+            if (x >= 0 && y >=0 && x < width && y < height)
             {
                 int index = cellIndex(x, y);
                 return getCells()[index].particle;
@@ -109,11 +109,7 @@ namespace tfn
 
         const int cellIndex(unsigned int x, unsigned int y) const
         {
-            if (x < width && y < height)
-            {
-                return y * width + x;
-            }
-            throw std::out_of_range("Grid coordinates out of bounds (cellIndex)");
+            return y * width + x;
         }
 
         Particle* createParticle (int x, int y, int type) {
@@ -149,7 +145,7 @@ namespace tfn
                 particles.push_back(newParticle); // Add the new particle to the vector
                 newParticle->grid = this;
 
-                getCell(x, y).particle = newParticle; // Set the particle pointer in the cell
+                getCell(x, y)->particle = newParticle; // Set the particle pointer in the cell
                 return newParticle;
             }
 
@@ -174,7 +170,7 @@ namespace tfn
             }
         }
 
-        void update();
+        void update(float dt);
 
         void cleanup() {
             for (auto particle : particles) {

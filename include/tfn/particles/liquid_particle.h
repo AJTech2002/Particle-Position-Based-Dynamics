@@ -1,59 +1,43 @@
 #pragma once
 #include "tfn/particle.h"
+#include "glm/glm.hpp"
+#include "engine/math.h"
 
 namespace tfn::particles
 {
   class LiquidParticle : public Particle
   {
-  public:
-    LiquidParticle(unsigned int x, unsigned int y, int type) : Particle(x, y, type) {}
+    public:
+      LiquidParticle(unsigned int x, unsigned int y, int type) : Particle(x, y, type) {}
+      void simulate(float dt) override {
+        Particle::simulate(dt);
+        glm::vec2 maxVelocity(2500.0, 2500.0);
+        velocity.y += -981.0f * dt;
+        velocity = glm::clamp(velocity, -maxVelocity, maxVelocity);
 
-    void simulate() override
-    {
-      Particle::simulate();
-      // Implement liquid particle behavior here
-      // For example, move down if possible
-      if (canMove(Direction::DOWN))
-      {
-        y -= 1; // Move down
-      }
-      else
-      {
-        bool canMoveLeftD = canMove(tfn::Direction::DOWN_LEFT);
-        bool canMoveRightD = canMove(tfn::Direction::DOWN_RIGHT);
+        glm::ivec2 curPos = {x, y};
+        glm::ivec2 nextPos = nextAvailableCellAlongVelocity(velocity, dt);
 
-        if (canMoveLeftD && canMoveRightD)
-        {
-          // Randomly choose to move left or right
-          if (rand() % 2 == 0) x -= 1; // Move left
-          else x += 1; // Move right
-          y -= 1; // Move down
-        }
-        else if (canMoveLeftD)
-        {
-          x -= 1; // Move left
-          y -= 1; // Move down
-        }
-        else if (canMoveRightD)
-        {
-          x += 1; // Move right
-          y -= 1; // Move down
-        }
-        else
-        {
-          bool canMoveLeft = canMove(tfn::Direction::LEFT);
-          bool canMoveRight = canMove(tfn::Direction::RIGHT);
-
-          if (canMoveLeft && canMoveRight)
-          {
-            // Randomly choose to move left or right
-            if (rand() % 2 == 0) x -= 1; // Move left
-            else x += 1; // Move right
+        if (nextPos == curPos) {
+          // Spread sideways when blocked
+          int dir = (math::randMultiplier() > 0 ? 1 : -1);
+          if (canMove({x + dir, y})) {
+            velocity.x += dt * 2500.0f * dir;
+            velocity.y *= 0.5f;
+          } else if (canMove({x - dir, y})) {
+            velocity.x += dt * -2500.0f * dir;
+            velocity.y *= 0.5f;
+          } else {
+            // Dampen when stuck
+            velocity *= 0.5f;
           }
-          else if (canMoveLeft) x -= 1; // Move left
-          else if (canMoveRight) x += 1; // Move right
-        }
+        }         
+
+        nextPos = nextAvailableCellAlongVelocity(velocity, dt);
+        x = nextPos.x;
+        y = nextPos.y;
+
+        velocity *= 0.95f; // damping
       }
-    }
   };
 }

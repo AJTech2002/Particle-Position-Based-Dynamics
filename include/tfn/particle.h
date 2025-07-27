@@ -56,13 +56,18 @@ namespace tfn
         glm::vec2 velocity = glm::vec2(0.0f, 0.0f);
         glm::vec2 absPos = glm::vec2(0.0f, 0.0f);
 
+        glm::ivec2 lastPosI = glm::ivec2(0, 0); // Last integer position for grid calculations
+        glm::vec2 lastPos = glm::vec2(0.0f, 0.0f); // Last position for velocity calculation
+
         bool hasUpdated = false;
         Particle(unsigned int x, unsigned int y, int type) : x(x), y(y), type(type), absPos(x,y) {}
         virtual ~Particle() = default;
-        virtual void simulate();
+        virtual void simulate(float dt);
         virtual void assign();
         virtual bool canMove(Direction dir);
-        
+        virtual bool canMove(glm::ivec2 to);
+        virtual glm::ivec2 nextAvailableCellAlongVelocity (glm::vec2 velocity, float dt); 
+
         Particle *getNeighbor(Direction dir) const;
         Particle *getOldNeighbour(Direction dir) const;
     };

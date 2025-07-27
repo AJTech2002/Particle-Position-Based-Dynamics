@@ -10,7 +10,6 @@ namespace game {
     int type;
   };
 
-
   class Engine {
     public:
       void init(void);
@@ -18,6 +17,14 @@ namespace game {
       void cleanup(void);
       void event (const sapp_event* event);
       void updateGrid(particle* newGrid);
+
+      float gameTime = 0.0;
+      float dt = 0.0;
+
+      static Engine& getInstance() {
+        static Engine instance;
+        return instance;
+      }
   };
 
 }

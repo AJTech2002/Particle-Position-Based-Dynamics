@@ -32,6 +32,8 @@ namespace tfn
   struct DebugElement {
     DebugShapeType type; 
     glm::vec3 col;
+    float startTime;
+    float duration;
 
     union {
       Line line;
@@ -46,9 +48,11 @@ namespace tfn
         static Debug instance;
         return instance;
       }
+      
+      game::Engine* engine;
      
-      static void drawLine(glm::vec2 from, glm::vec2 to, glm::vec3 col = glm::vec3(1,0,0));
-      static void drawSquare(glm::vec2 center, glm::vec2 extent, glm::vec3 col = glm::vec3(1,0,0));
+      static void drawLine(glm::vec2 from, glm::vec2 to, glm::vec3 col = glm::vec3(1,0,0), float duration = 0.0);
+      static void drawSquare(glm::vec2 center, glm::vec2 extent, glm::vec3 col = glm::vec3(1,0,0), float duration = 0.0);
 
       void render();
     private:

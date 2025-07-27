@@ -1,4 +1,6 @@
+#include "engine/math.h"
 #include "tfn/grid.h"
+#include "engine/debug.h"
 #include <iostream>
 
 using namespace tfn::particles;
@@ -34,6 +36,8 @@ tfn::Direction getMoveableSandDirection(SandParticle *particle)
   return tfn::Direction::NONE; // No valid move found
 }
 
+glm::vec2 maxVelocity (2500.0, 2500.0);
+
 bool SandParticle::canMove(tfn::Direction dir)
 {
   std::pair<int, int> offset = getDirectionOffset(dir);
@@ -53,16 +57,65 @@ bool SandParticle::canMove(tfn::Direction dir)
           (newNeighbor == nullptr || newNeighbor->type == tfn::consts::LIQUID_CELL));
 }
 
-void SandParticle::simulate()
+bool SandParticle::canMove(glm::ivec2 newPos) {
+  int newX = newPos.x;
+  int newY = newPos.y;
+
+  if (!grid->inBounds(newX, newY))
+  {
+    return false; // Out of bounds
+  }
+
+  Particle *oldNeighbor = grid->getOldParticle(newX, newY); 
+  Particle *newNeighbor = grid->getParticle(newX, newY);
+
+  // Can move into liquids
+  return ((oldNeighbor == nullptr || oldNeighbor->type == tfn::consts::LIQUID_CELL) &&
+      (newNeighbor == nullptr || newNeighbor->type == tfn::consts::LIQUID_CELL));
+}
+
+
+float scatterDistance = 100.0;
+
+void SandParticle::simulate(float dt)
 {
   // update super
-  Particle::simulate();
+  Particle::simulate(dt);
+  
+  glm::ivec2 curPos = {x,y};
 
-  tfn::Direction moveDir = getMoveableSandDirection(this);
-  std::pair<int, int> offset = getDirectionOffset(moveDir);
+  // update velocity with gravity
+  velocity.y += -981.0f * dt;
+  velocity = glm::clamp(velocity, -maxVelocity, maxVelocity);
 
-  int newX = x + offset.first;
-  int newY = y + offset.second;
+  glm::ivec2 testPos = {x,y};
+
+  testPos = nextAvailableCellAlongVelocity(velocity, dt);
+ 
+  // No more room below, modify vel x and damp y
+  if (testPos == curPos) {
+    // Spread sideways when blocked
+    int dir = (math::randMultiplier() > 0 ? 1 : -1);
+    if (canMove({x + dir, y - 1})) {
+      velocity.x += dt * 600.0f * dir;
+      velocity.y *= 0.95f;
+    } else if (canMove({x - dir, y - 1})) {
+      velocity.x += dt * -600.0f * dir;
+      velocity.y *= 0.95f;
+    } else {
+      // Dampen when stuck
+      velocity *= 0.5f;
+    }
+  }         
+
+
+  testPos = nextAvailableCellAlongVelocity( velocity, dt);
+
+  int newX = testPos.x;
+  int newY = testPos.y;
+
+  if (testPos != curPos)
+    velocity.x *= 0.95; 
 
   // check if liquid particle is present at the new position
   if (grid->inBounds(newX, newY)) {

@@ -20,7 +20,8 @@ namespace tfn
 
     struct DisplayCell
     {
-        int type;
+        // int type;
+        float r, g, b, a; // Color for display purposes
     };
 
     class ParticleGrid
@@ -28,6 +29,7 @@ namespace tfn
     private:
         Cell *cells;
         std::vector<Particle*> particles;
+        std::unordered_map<int, std::vector<Particle*>> particleMap; // Map for quick access to particles by their position
 
     public:
         unsigned int width;
@@ -44,7 +46,10 @@ namespace tfn
 
             for (unsigned int i = 0; i < width * height; ++i)
             {
-                display[i].type = 0; // Initialize display cells to type 0
+              display[i].r = 0.0f;
+              display[i].g = 0.0f;
+              display[i].b = 0.0f;
+              display[i].a = 0.0f; // Default alpha value for display cells
             }
         }
 
@@ -69,12 +74,28 @@ namespace tfn
             throw std::out_of_range("Grid coordinates out of bounds (getCell)");
         }
 
+        void setDisplay(int x, int y, Particle* particle)
+        {
+            if (x >= 0 && y >= 0 && x < width && y < height)
+            {
+                // display[y * width + x].type = particle->type; // Update display cell type
+                display[y * width + x].r = particle->color.r;
+                display[y * width + x].g = particle->color.g;
+                display[y * width + x].b = particle->color.b;
+                display[y * width + x].a = 0.0f; // Default alpha
+            }
+            else
+            {
+                /*throw std::out_of_range("Grid coordinates out of bounds (setCell)");*/
+            }
+        }
+
         void setCell(int x, int y, Particle* particle)
         {
             if (x >= 0 && y >= 0 && x < width && y < height)
             {
                 getCell(x, y)->particle = particle; // Set the particle pointer in the cell
-                display[y * width + x].type = particle->type; // Update display cell type
+                setDisplay(x, y, particle); // Update display cell type
             }
             else
             {
@@ -161,7 +182,10 @@ namespace tfn
         {
             for (unsigned int i = 0; i < width * height; ++i)
             {
-                display[i].type = tfn::consts::EMPTY_CELL;
+                display[i].r = 0.0f;
+                display[i].g = 0.0f;
+                display[i].b = 0.0f;
+                display[i].a = 0.0f;
 
                 if (cells[i].particle != nullptr) cells[i].particle->hasUpdated = false;
 
@@ -170,7 +194,7 @@ namespace tfn
             }
         }
 
-        void update(float dt);
+        void update(float dt, bool simulate = false);
 
         void cleanup() {
             for (auto particle : particles) {

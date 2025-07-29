@@ -1,8 +1,9 @@
 #include "tfn/grid.h"
 #include "tfn/particle.h"
 
-void tfn::Particle::assign() {
-  grid->setCell(x,y,this);
+void tfn::Particle::assign(bool displayOnly) {
+  if (!displayOnly) grid->setCell(x,y,this);
+  else grid->setDisplay(x,y,this); // Update display cell type
 }
 
 bool tfn::Particle::canMove(tfn::Direction dir)

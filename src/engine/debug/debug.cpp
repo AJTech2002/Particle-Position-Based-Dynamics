@@ -6,6 +6,7 @@ void tfn::Debug::drawLine (glm::vec2 from, glm::vec2 to, glm::vec3 col, float du
       .col = col,
       .type = tfn::DebugShapeType::LINE,
       .duration = duration,
+      .startTime = getInstance().engine->gameTime,
       .shape = {
         .line = {
           .from = from,
@@ -20,6 +21,7 @@ void tfn::Debug::drawSquare (glm::vec2 center, glm::vec2 extent, glm::vec3 col, 
       .col = col,
       .type = tfn::DebugShapeType::SQUARE,
       .duration = duration,
+      .startTime = getInstance().engine->gameTime,
       .shape = {
         .square = {
           .center = center,
@@ -32,8 +34,6 @@ void tfn::Debug::drawSquare (glm::vec2 center, glm::vec2 extent, glm::vec3 col, 
 void tfn::Debug::submit (DebugElement el) {
   if (debugBufferCount < MAX_DEBUG_BUFFER) {
     debugBuffer[debugBufferCount] = el;
-    debugBuffer[debugBufferCount].startTime =   
-    this->engine->gameTime;
     debugBufferCount += 1;
   }
 }

@@ -2,7 +2,10 @@
 
 @block common
 struct particle {
-    int type;
+    float r;
+    float g;
+    float b;
+    float a;
 };
 @end
 
@@ -25,28 +28,31 @@ layout(std140, binding = 2) uniform Params {
 
 void main() {
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
-    int particle = particles[pos.y * width + pos.x].type; // Access the particle data
+    // int particle = particles[pos.y * width + pos.x].type; // Access the particle data
     
-    // TODO: Remove branching and use lookups to optimize
-    if (particle == 0) {
-        // If no particle, set the pixel to black
+    // // TODO: Remove branching and use lookups to optimize
+    // if (particle == 0) {
+    //     // If no particle, set the pixel to black
 
-        imageStore(destImage, pos, vec4(0.0, 0.0, 0.0, 1.0));
-        return;
-    }
-    else if (particle == 1) {
-        // If particle is type 1, set the pixel to blue
-        imageStore(destImage, pos, vec4(0.0, 0.0, 1.0, 1.0)); // blue
-        return;
-    }
-    else if (particle == 2) {
-        // If particle is type 2, set the pixel to green
-        imageStore(destImage, pos, vec4(0.0, 1.0, 0.0, 1.0)); // green
-        return;
-    }
+    //     imageStore(destImage, pos, vec4(0.0, 0.0, 0.0, 1.0));
+    //     return;
+    // }
+    // else if (particle == 1) {
+    //     // If particle is type 1, set the pixel to blue
+    //     imageStore(destImage, pos, vec4(0.0, 0.0, 1.0, 1.0)); // blue
+    //     return;
+    // }
+    // else if (particle == 2) {
+    //     // If particle is type 2, set the pixel to green
+    //     imageStore(destImage, pos, vec4(0.0, 1.0, 0.0, 1.0)); // green
+    //     return;
+    // }
 
+    vec3 color = vec3(particles[pos.y * width + pos.x].r,
+                          particles[pos.y * width + pos.x].g,
+                          particles[pos.y * width + pos.x].b);
 
-    imageStore(destImage, pos, vec4(1.0, 1.0, 0.0, 0.0)); // red
+    imageStore(destImage, pos, vec4(color, 0.0)); // red
 }
 @end
 

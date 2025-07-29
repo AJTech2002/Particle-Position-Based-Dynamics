@@ -13,8 +13,8 @@ namespace game
 {
   const unsigned int SCR_WIDTH = 800;
   const unsigned int SCR_HEIGHT = 800;
-  const unsigned int GRID_WIDTH = 400;
-  const unsigned int GRID_HEIGHT = 400;
+  const unsigned int GRID_WIDTH = 100;
+  const unsigned int GRID_HEIGHT = 100;
 
   tfn::ComputeRenderer renderer;
   tfn::ParticleGrid particleGrid(GRID_WIDTH, GRID_HEIGHT);
@@ -31,7 +31,7 @@ namespace game
   int brushType = 0; // 0 empty, 1 solid, 2 liquid, 3 sand
   bool pressingBrush = false;
   bool mouseDown = false;
-  int brushSize = 3; // Default brush size
+  int brushSize = 2; // Default brush size
   int _frame = 0;
   float mx = 0.0f;
   float my = 0.0f;
@@ -41,6 +41,8 @@ namespace game
   double accumulatedFixedTimestep;
 
   std::vector<tfn::Particle*> solidParticles;
+
+  bool step = false;
 
   void Engine::frame(void)
   {
@@ -94,16 +96,28 @@ namespace game
 
     accumulatedFixedTimestep += dt;
 
+    if (step) {
+      simulate = true;
+      accumulatedFixedTimestep = fixedTimestep; // Force a single step
+    }
+
     while (accumulatedFixedTimestep >= fixedTimestep) {
       if (simulate) {
-        solver.simulate(fixedTimestep);
+          solver.simulate(dt);
+        }
         
-      }
-
-      particleGrid.update(fixedTimestep);
-        solver.propogate(fixedTimestep);
+        particleGrid.update(dt, simulate);
+        
+        if (simulate) {
+          solver.propogate(dt);
+        }
 
       accumulatedFixedTimestep -= fixedTimestep;
+    }
+
+    if (step) {
+      step = false;
+      simulate = false;
     }
 
     renderer.update(particleGrid.display);
@@ -158,6 +172,17 @@ namespace game
             std::cout << "Simulation started\n";
           } else {
             std::cout << "Simulation paused\n";
+          }
+        }
+
+        if (event->key_code == SAPP_KEYCODE_N)
+        {
+          if (!simulate) {
+            std::cout << "Simulation step\n";
+            step = true;
+          } else {
+            simulate = false;
+            step = true;
           }
         }
         break;

@@ -11,7 +11,7 @@ namespace tfn::particles
       LiquidParticle(unsigned int x, unsigned int y, int type) : Particle(x, y, type) {}
       void simulate(float dt) override {
         Particle::simulate(dt);
-        glm::vec2 maxVelocity(2500.0, 2500.0);
+        glm::vec2 maxVelocity(5000.0, 5000.0);
         velocity.y += -981.0f * dt;
         velocity = glm::clamp(velocity, -maxVelocity, maxVelocity);
 
@@ -21,11 +21,18 @@ namespace tfn::particles
         if (nextPos == curPos) {
           // Spread sideways when blocked
           int dir = (math::randMultiplier() > 0 ? 1 : -1);
-          if (canMove({x + dir, y})) {
-            velocity.x += dt * 2500.0f * dir;
+          if (canMove({x + dir, y - 1})) {
+            velocity.x += dt * 1500.0f * dir;
+            velocity.y *= 0.95f;
+          } else if (canMove({x - dir, y - 1})) {
+            velocity.x += dt * -1500.0f * dir;
+            velocity.y *= 0.95f;
+          }
+          else if (canMove({x + dir, y})) {
+            velocity.x += dt * 1500.0f * dir;
             velocity.y *= 0.5f;
           } else if (canMove({x - dir, y})) {
-            velocity.x += dt * -2500.0f * dir;
+            velocity.x += dt * -1500.0f * dir;
             velocity.y *= 0.5f;
           } else {
             // Dampen when stuck

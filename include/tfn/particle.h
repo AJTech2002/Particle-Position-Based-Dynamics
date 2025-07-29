@@ -53,7 +53,7 @@ namespace tfn
         int y;
         int type;
         ParticleGrid *grid;
-        bool dead = false; // Flag to mark if the particle is dead
+        bool visible = true; // Flag to mark if the particle is dead
         glm::vec2 velocity = glm::vec2(0.0f, 0.0f);
         glm::vec2 absPos = glm::vec2(0.0f, 0.0f);
 

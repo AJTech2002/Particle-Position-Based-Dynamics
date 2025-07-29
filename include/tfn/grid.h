@@ -94,8 +94,12 @@ namespace tfn
         {
             if (x >= 0 && y >= 0 && x < width && y < height)
             {
-                getCell(x, y)->particle = particle; // Set the particle pointer in the cell
-                setDisplay(x, y, particle); // Update display cell type
+                if (getCell(x, y)->particle == nullptr && particle->visible) {
+                  getCell(x, y)->particle = particle; // Set the particle pointer in the cell
+                  setDisplay(x, y, particle); // Update display cell type
+                }
+
+                particleMap[x + y * width].push_back(particle); // Add particle to the map for quick access
             }
             else
             {
@@ -106,6 +110,15 @@ namespace tfn
         const std::vector<Particle*>& getParticles()
         {
             return particles;
+        }
+
+        std::vector<Particle*>& getParticlesAt(int x, int y)
+        {
+            if (x >= 0 && y >= 0 && x < width && y < height)
+            {
+                return particleMap[x + y * width];
+            }
+            throw std::out_of_range("Grid coordinates out of bounds (getParticlesAt)");
         }
 
         Particle *getParticle(int x, int y)
@@ -192,6 +205,8 @@ namespace tfn
                 cells[i].lastParticle = cells[i].particle; // Store the last particle before clearing
                 cells[i].particle = nullptr; // Clear the particle pointer in the cell
             }
+
+            particleMap.clear(); // Clear the particle map
         }
 
         void update(float dt, bool simulate = false);

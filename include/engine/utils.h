@@ -25,10 +25,8 @@ static std::vector<tfn::Particle*> particlesAlongPath (tfn::ParticleGrid* grid, 
       break;
     }
     
-    tfn::Particle* particle = grid->getParticle(testPos.x, testPos.y);
-    if (particle != nullptr) {
-      particles.push_back(particle);
-    } 
+    std::vector<tfn::Particle*>& particlesAtCell = grid->getParticlesAt(testPos.x, testPos.y);
+    particles.insert(particles.end(), particlesAtCell.begin(), particlesAtCell.end());
   }
 
   return particles;

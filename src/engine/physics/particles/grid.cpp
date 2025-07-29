@@ -13,9 +13,7 @@ void tfn::ParticleGrid::update(float dt, bool simulate) {
 
   for (auto& particle : particles) {
 
-    if (particle->dead) {
-      continue; // Skip dead particles
-    }
+    
 
     if (simulate)  {
       int oldX = particle->x;
@@ -24,12 +22,8 @@ void tfn::ParticleGrid::update(float dt, bool simulate) {
     }
 
     if (particle->hasUpdated || !simulate) {
-      if (inBounds(particle->x, particle->y) &&
-        getCell(particle->x, particle->y)->particle == nullptr) {
+      if (inBounds(particle->x, particle->y)) {
         setCell(particle->x, particle->y, particle);
-      }
-      else {
-        particle->dead = true;
       }
     }
   }

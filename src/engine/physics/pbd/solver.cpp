@@ -277,7 +277,7 @@ namespace physics
         tfn::Particle *p = collidedParticles[other];
         glm::ivec2 start = glm::ivec2(p->x, p->y);
         glm::ivec2 offset = glm::ivec2(p->x - p->lastPosI.x, p->y - p->lastPosI.y);
-        glm::ivec2 endCheck = start + offset * 100;
+        glm::ivec2 endCheck = start + offset;
 
         // tfn::Debug::getInstance().drawLine(
         //     glm::vec2(start.x, start.y),
@@ -285,61 +285,51 @@ namespace physics
         //     glm::vec3(0.0f, 1.0f, 0.0f),
         //     0.1f);
 
-        tfn::Debug::getInstance().drawLine(
-            glm::vec2(other->x, other->y),
-            glm::vec2(endCheck.x, endCheck.y),
-            glm::vec3(1.0f, 1.0f, 0.0f),
-            0.1f);
+        // tfn::Debug::getInstance().drawLine(
+        //     glm::vec2(other->x, other->y),
+        //     glm::vec2(endCheck.x, endCheck.y),
+        //     glm::vec3(1.0f, 1.0f, 0.0f),
+        //     0.1f);
 
-        tfn::Debug::getInstance().drawSquare(
-            glm::vec2(start.x, start.y),
-            glm::vec2(0.5f, 0.5f),
-            glm::vec3(0.0f, 1.0f, 0.0f),
-            2.2f);
+        // tfn::Debug::getInstance().drawSquare(
+        //     glm::vec2(start.x, start.y),
+        //     glm::vec2(0.5f, 0.5f),
+        //     glm::vec3(0.0f, 1.0f, 0.0f),
+        //     2.2f);
 
-        tfn::Debug::getInstance().drawSquare(
-            glm::vec2(other->x, other->y),
-            glm::vec2(0.5f, 0.5f),
-            glm::vec3(1.0f, 0.0f, 0.0f),
-            2.2f);
+        // tfn::Debug::getInstance().drawSquare(
+        //     glm::vec2(other->x, other->y),
+        //     glm::vec2(0.5f, 0.5f),
+        //     glm::vec3(1.0f, 0.0f, 0.0f),
+        //     2.2f);
 
-        glm::ivec2 checkBuffer[1000];
-        int size = math::getLinePixels(
-            start,
-            endCheck,
-            checkBuffer);
+        // glm::ivec2 checkBuffer[1000];
+        // int size = math::getLinePixels(
+        //     start,
+        //     endCheck,
+        //     checkBuffer);
 
-        int moveTo = 0;
-        for (int i = 1; i < glm::min(1000, size); i++)
-        {
-          glm::ivec2 &testPos = checkBuffer[i];
-          if (!p->grid->inBounds(testPos.x, testPos.y))
-          {
-            break;
-          }
+        // int moveTo = 0;
+        // for (int i = 1; i < glm::min(1000, size); i++)
+        // {
+        //   glm::ivec2 &testPos = checkBuffer[i];
+        //   if (!p->grid->inBounds(testPos.x, testPos.y))
+        //   {
+        //     break;
+        //   }
 
-          if (particleMap.find(testPos.x + testPos.y * p->grid->width) == particleMap.end())
-          {
-            // If there is a particle at this position, stop
-            moveTo = i;
+        //   if (p->grid->getParticlesAt(testPos.x, testPos.y).size() > 0)
+        //   {
+        //     // If there is a particle at this position, stop
+        //     moveTo = i;
+        //     break;
+        //   }
+        //   else {
+            
+        //   }
+        // }
 
-            tfn::Debug::getInstance().drawSquare(
-                glm::vec2(other->x, other->y),
-                glm::vec2(0.5f, 0.5f),
-                glm::vec3(1.0f, 1.0f, 1.0f),
-                1.05f);
-            break;
-          }
-          else {
-            tfn::Debug::getInstance().drawSquare(
-                glm::vec2(other->x, other->y),
-                glm::vec2(0.5f, 0.5f),
-                glm::vec3(0.0f, 1.0f, 1.0f),
-                1.05f);
-          }
-        }
-
-        glm::ivec2 target = checkBuffer[moveTo];
+        glm::ivec2 target = start;
 
         other->absPos = glm::vec2(target.x, target.y) + glm::normalize(collidedParticles[other]->velocity);
         other->lastPos = glm::vec2(other->x, other->y);

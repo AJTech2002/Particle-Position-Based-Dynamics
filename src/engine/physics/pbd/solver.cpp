@@ -140,7 +140,7 @@ namespace physics
 
   };
 
-  glm::vec2 maxVelocity = glm::vec2(10.0f, 105.0f); // Max velocity to prevent too fast movement
+  glm::vec2 maxVelocity = glm::vec2(10.0f, 500.0f); // Max velocity to prevent too fast movement
 
   void Solver::simulate(float dt)
   {
@@ -156,7 +156,7 @@ namespace physics
         // 1. Apply gravity (predict positions)
         for (auto &p : b.shape.points)
         {
-          p.vel += glm::vec2(0, -9.81f * 10.0f) * subDt;
+          p.vel += glm::vec2(0, -9.81f * 30.0f) * subDt;
           p.prevPos = p.pos;      // store for velocity update later
           p.pos += p.vel * subDt; // predicted position
         }
@@ -258,7 +258,7 @@ namespace physics
             // Compare distance to the last position
             tfn::Particle *collidedWith = collidedParticles[other];
 
-            if (glm::distance(glm::vec2(other->x, other->y), p->lastPos) < glm::distance(glm::vec2(other->x, other->y), collidedWith->lastPos))
+            if (glm::distance(glm::vec2(other->x, other->y), p->lastPos) > glm::distance(glm::vec2(other->x, other->y), collidedWith->lastPos))
             {
               // If the current particle is closer to the last position, update the collided particle
               collidedParticles[other] = p;
@@ -275,86 +275,92 @@ namespace physics
       for (auto &other : _particlesAlongPathUpdated)
       {
         tfn::Particle *p = collidedParticles[other];
-        glm::ivec2 start = glm::ivec2(p->x, p->y);
-        glm::ivec2 offset = glm::ivec2(p->x - p->lastPosI.x, p->y - p->lastPosI.y);
-        glm::ivec2 endCheck = start + offset;
+        glm::ivec2 start = glm::ivec2(other->x, other->y);
+        glm::ivec2 offset = glm::ivec2(other->x - p->lastPosI.x, other->y - p->lastPosI.y);
+        glm::vec2 endCheck = glm::vec2(p->x, p->y) + glm::vec2(offset.x, offset.y);
 
-        // tfn::Debug::getInstance().drawLine(
-        //     glm::vec2(start.x, start.y),
-        //     glm::vec2(endCheck.x, endCheck.y),
-        //     glm::vec3(0.0f, 1.0f, 0.0f),
-        //     0.1f);
 
-        // tfn::Debug::getInstance().drawLine(
-        //     glm::vec2(other->x, other->y),
-        //     glm::vec2(endCheck.x, endCheck.y),
-        //     glm::vec3(1.0f, 1.0f, 0.0f),
-        //     0.1f);
+        glm::ivec2 checkBuffer[2000];
+        int size = math::getLinePixels(
+            glm::ivec2(p->x, p->y),
+            endCheck,
+            checkBuffer,
+             2000
+          );
 
-        // tfn::Debug::getInstance().drawSquare(
-        //     glm::vec2(start.x, start.y),
-        //     glm::vec2(0.5f, 0.5f),
-        //     glm::vec3(0.0f, 1.0f, 0.0f),
-        //     2.2f);
+        int moveTo = 0;
+        for (int i = 1; i < glm::min(2000, size); i++)
+        {
+          glm::ivec2 &testPos = checkBuffer[i];
+          if (!p->grid->inBounds(testPos.x, testPos.y))
+          {
+            break;
+          }
 
-        // tfn::Debug::getInstance().drawSquare(
-        //     glm::vec2(other->x, other->y),
-        //     glm::vec2(0.5f, 0.5f),
-        //     glm::vec3(1.0f, 0.0f, 0.0f),
-        //     2.2f);
-
-        // glm::ivec2 checkBuffer[1000];
-        // int size = math::getLinePixels(
-        //     start,
-        //     endCheck,
-        //     checkBuffer);
-
-        // int moveTo = 0;
-        // for (int i = 1; i < glm::min(1000, size); i++)
-        // {
-        //   glm::ivec2 &testPos = checkBuffer[i];
-        //   if (!p->grid->inBounds(testPos.x, testPos.y))
-        //   {
-        //     break;
-        //   }
-
-        //   if (p->grid->getParticlesAt(testPos.x, testPos.y).size() > 0)
-        //   {
-        //     // If there is a particle at this position, stop
-        //     moveTo = i;
-        //     break;
-        //   }
-        //   else {
+          if (particleMap.find(testPos.x + testPos.y * p->grid->width) == particleMap.end())
+          {
+            // If the cell is empty, continue to the next cell
+            moveTo = i;
+            break;
+          }
+          else {
             
-        //   }
-        // }
+          }
+        }
 
-        glm::ivec2 target = start;
+        glm::ivec2 target = checkBuffer[moveTo];
 
-        other->absPos = glm::vec2(target.x, target.y) + glm::normalize(collidedParticles[other]->velocity);
+
+        tfn::Debug::getInstance().drawLine(
+            glm::vec2(other->x, other->y),
+            glm::ivec2(endCheck.x, endCheck.y),
+            glm::vec3(0.0f, 1.0f, 0.0f),
+        0.4f);
+            
+        tfn::Debug::getInstance().drawLine(
+            glm::vec2(other->x+0.5f, other->y+0.5f),
+            glm::vec2(target.x+0.5f, target.y+0.5f),
+            glm::vec3(1.0f, 1.0f, 1.0f),
+            0.4f);
+            
+
+        other->absPos = glm::vec2(target.x, target.y);
         other->lastPos = glm::vec2(other->x, other->y);
         other->lastPosI = glm::ivec2(other->x, other->y);
         other->color = glm::vec3(1.0f, 1.0f, 1.0f); // Mark as updated
-
         other->x = other->absPos.x;
         other->y = other->absPos.y;
 
         other->hasUpdated = true;       // Mark as updated
-        other->velocity += p->velocity; // Acquire velocity from the moving particle
+        glm::vec2 collisionNormal = glm::vec2(offset.x, offset.y);
+        other->velocity = other->velocity - 2.0f * ((other->velocity - p->velocity) * collisionNormal) * collisionNormal; // Acquire velocity from the moving particle
         // other->assign();
       }
 
       // Update particle positions in the grid
-      for (tfn::Particle *other : _particlesAlongPathUpdated)
-      {
-        other->assign();
-      }
+     
 
       for (auto &p : body->particles)
       {
         p->assign();
       }
+
+       for (tfn::Particle *other : _particlesAlongPathUpdated)
+      {
+        other->assign();
+      }
     }
+  }
+
+  void Solver::renderOnTop() {
+    for (int i = 0; i < bodyCount; i++)
+    {
+      SBody &b = *bodies[i];
+      for (auto &p : b.particles)
+      {
+        p->assign();
+      }
+    };
   }
 
   void Solver::debugDraw()

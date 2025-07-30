@@ -3,6 +3,7 @@
 #define MATH_ENG
 
 #include <glm/glm.hpp>
+#include <iostream>
 
 using namespace glm;
 
@@ -28,7 +29,8 @@ namespace math {
   static int getLinePixels(
       glm::ivec2 a, 
       glm::ivec2 b,
-      glm::ivec2* out
+      glm::ivec2* out,
+      int maxSize = 1000
       ) {
     int x0 = a.x;
     int x1 = b.x;
@@ -42,6 +44,12 @@ namespace math {
     int err = dx + dy, e2;
 
     while (true) {
+
+      if (count >= maxSize) {
+        std::cerr << "Warning: getLinePixels overflow, max size reached." << std::endl;
+        break; // Prevent overflow
+      }
+
       out[count++] = {x0, y0};
       if (x0 == x1 && y0 == y1) break;
       e2 = 2 * err;

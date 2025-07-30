@@ -107,6 +107,7 @@ namespace physics {
       void simulate (float dt);
       void propogate (float dt);
       void debugDraw ();
+      void renderOnTop();
       void createBodyFromPoints (std::vector<tfn::Particle*> particle);
   };
   

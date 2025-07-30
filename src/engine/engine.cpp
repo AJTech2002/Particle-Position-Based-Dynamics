@@ -36,11 +36,11 @@ namespace game
   float mx = 0.0f;
   float my = 0.0f;
   bool simulate = true;
-  
+
   const double fixedTimestep = 1.0 / 60.0;
   double accumulatedFixedTimestep;
 
-  std::vector<tfn::Particle*> solidParticles;
+  std::vector<tfn::Particle *> solidParticles;
 
   bool step = false;
 
@@ -68,8 +68,9 @@ namespace game
               int ny = y + j;
               if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT)
               {
-                tfn::Particle* particle = particleGrid.addParticle(nx, ny, brushType);
-                if (brushType == 1) {
+                tfn::Particle *particle = particleGrid.addParticle(nx, ny, brushType);
+                if (brushType == 1)
+                {
                   if (particle != nullptr)
                     solidParticles.push_back(particle);
                 }
@@ -79,16 +80,19 @@ namespace game
         }
         else
         {
-          tfn::Particle* particle = particleGrid.addParticle(x, y, brushType);
-          if (brushType == 1) {
+          tfn::Particle *particle = particleGrid.addParticle(x, y, brushType);
+          if (brushType == 1)
+          {
             if (particle != nullptr)
               solidParticles.push_back(particle);
           }
         }
       }
     }
-    else {
-      if (solidParticles.size() > 0) {
+    else
+    {
+      if (solidParticles.size() > 0)
+      {
         solver.createBodyFromPoints(solidParticles);
         solidParticles.clear();
       }
@@ -96,26 +100,38 @@ namespace game
 
     accumulatedFixedTimestep += dt;
 
-    if (step) {
+    if (step)
+    {
       simulate = true;
       accumulatedFixedTimestep = fixedTimestep; // Force a single step
     }
 
-    while (accumulatedFixedTimestep >= fixedTimestep) {
-      if (simulate) {
-          solver.simulate(dt);
-        }
-        
-        particleGrid.update(dt, simulate);
-        
-        if (simulate) {
-          solver.propogate(dt);
-        }
+    while (accumulatedFixedTimestep >= fixedTimestep)
+    {
+      if (simulate)
+      {
+        solver.simulate(fixedTimestep);
+      }
+      
+      if (simulate)
+      {
+        solver.propogate(fixedTimestep);
+      }
+
+      particleGrid.update(fixedTimestep, simulate);
+
+      if (simulate)
+      {
+        solver.propogate(fixedTimestep);
+      }
+
+      solver.renderOnTop();
 
       accumulatedFixedTimestep -= fixedTimestep;
     }
 
-    if (step) {
+    if (step)
+    {
       step = false;
       simulate = false;
     }
@@ -123,7 +139,7 @@ namespace game
     renderer.update(particleGrid.display);
     solver.debugDraw();
     renderer.render();
-    
+
     _frame++;
   }
 
@@ -137,86 +153,111 @@ namespace game
   {
     switch (event->type)
     {
-      case SAPP_EVENTTYPE_KEY_DOWN:
-        if (event->key_code == SAPP_KEYCODE_ESCAPE)
+    case SAPP_EVENTTYPE_KEY_DOWN:
+      if (event->key_code == SAPP_KEYCODE_ESCAPE)
+      {
+        sapp_request_quit();
+      }
+
+      // + / - to increase/decrease brush size
+      if (event->key_code == SAPP_KEYCODE_EQUAL)
+      {
+        if (brushSize < 10)
         {
-          sapp_request_quit();
+          brushSize++;
+          std::cout << "Brush size increased to: " << brushSize << std::endl;
         }
+      }
 
-        if (event->key_code == SAPP_KEYCODE_B && !pressingBrush)
+      if (event->key_code == SAPP_KEYCODE_MINUS)
+      {
+        if (brushSize > 1)
         {
-          pressingBrush = true;
-          brushType = (brushType + 1) % 4;
-
-          switch (brushType)
-          {
-            case 0:
-              std::cout << "Brush set to EMPTY_CELL\n";
-              break;
-            case 1:
-              std::cout << "Brush set to SOLID_CELL\n";
-              break;
-            case 2:
-              std::cout << "Brush set to LIQUID_CELL\n";
-              break;
-            case 3:
-              std::cout << "Brush set to SAND_CELL\n";
-              break;
-          }
+          brushSize--;
+          std::cout << "Brush size decreased to: " << brushSize << std::endl;
         }
+      }
 
-        if (event->key_code == SAPP_KEYCODE_P)
+      if (event->key_code == SAPP_KEYCODE_B && !pressingBrush)
+      {
+        pressingBrush = true;
+        brushType = (brushType + 1) % 4;
+
+        switch (brushType)
         {
-          simulate = !simulate;
-          if (simulate) {
-            std::cout << "Simulation started\n";
-          } else {
-            std::cout << "Simulation paused\n";
-          }
+        case 0:
+          std::cout << "Brush set to EMPTY_CELL\n";
+          break;
+        case 1:
+          std::cout << "Brush set to SOLID_CELL\n";
+          break;
+        case 2:
+          std::cout << "Brush set to LIQUID_CELL\n";
+          break;
+        case 3:
+          std::cout << "Brush set to SAND_CELL\n";
+          break;
         }
+      }
 
-        if (event->key_code == SAPP_KEYCODE_N)
+      if (event->key_code == SAPP_KEYCODE_P)
+      {
+        simulate = !simulate;
+        if (simulate)
         {
-          if (!simulate) {
-            std::cout << "Simulation step\n";
-            step = true;
-          } else {
-            simulate = false;
-            step = true;
-          }
+          std::cout << "Simulation started\n";
         }
-        break;
-
-      case SAPP_EVENTTYPE_KEY_UP:
-        if (event->key_code == SAPP_KEYCODE_B)
+        else
         {
-          pressingBrush = false;
+          std::cout << "Simulation paused\n";
         }
-        break;
+      }
 
-      case SAPP_EVENTTYPE_MOUSE_DOWN:
-        if (event->mouse_button == SAPP_MOUSEBUTTON_LEFT)
+      if (event->key_code == SAPP_KEYCODE_N)
+      {
+        if (!simulate)
         {
-          solidParticles.clear();
-          mouseDown = true;
+          std::cout << "Simulation step\n";
+          step = true;
         }
-        break;
-
-      case SAPP_EVENTTYPE_MOUSE_UP:
-        if (event->mouse_button == SAPP_MOUSEBUTTON_LEFT)
+        else
         {
-          mouseDown = false;
-
-          // Create a RBody out of the particles
+          simulate = false;
+          step = true;
         }
-        break;
+      }
+      break;
 
-      case SAPP_EVENTTYPE_MOUSE_MOVE:
-          mx = event->mouse_x;
-          my = event->mouse_y;
+    case SAPP_EVENTTYPE_KEY_UP:
+      if (event->key_code == SAPP_KEYCODE_B)
+      {
+        pressingBrush = false;
+      }
+      break;
 
-      default:
-        break;
+    case SAPP_EVENTTYPE_MOUSE_DOWN:
+      if (event->mouse_button == SAPP_MOUSEBUTTON_LEFT)
+      {
+        solidParticles.clear();
+        mouseDown = true;
+      }
+      break;
+
+    case SAPP_EVENTTYPE_MOUSE_UP:
+      if (event->mouse_button == SAPP_MOUSEBUTTON_LEFT)
+      {
+        mouseDown = false;
+
+        // Create a RBody out of the particles
+      }
+      break;
+
+    case SAPP_EVENTTYPE_MOUSE_MOVE:
+      mx = event->mouse_x;
+      my = event->mouse_y;
+
+    default:
+      break;
     }
   }
 

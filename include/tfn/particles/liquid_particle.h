@@ -36,7 +36,7 @@ namespace tfn::particles
             velocity.y *= 0.5f;
           } else {
             // Dampen when stuck
-            velocity *= 0.5f;
+            // velocity *= 0.5f;
           }
         }         
 

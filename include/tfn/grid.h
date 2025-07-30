@@ -12,211 +12,227 @@
 
 namespace tfn
 {
-    struct Cell
+  struct Cell
+  {
+    Particle *lastParticle = nullptr; // Pointer to the last particle added to this cell
+    Particle *particle = nullptr;     // Pointer to the particle in this cell, if any
+  };
+
+  struct DisplayCell
+  {
+    // int type;
+    float r, g, b, a; // Color for display purposes
+  };
+
+  class ParticleGrid
+  {
+  private:
+    Cell *cells;
+    std::vector<Particle *> particles;
+    std::unordered_map<int, std::vector<Particle *>> particleMap; // Map for quick access to particles by their position
+
+  public:
+    unsigned int width;
+    unsigned int height;
+    DisplayCell *display;
+
+    ParticleGrid(unsigned int w, unsigned int h) : width(w), height(h)
     {
-        Particle* lastParticle = nullptr; // Pointer to the last particle added to this cell
-        Particle *particle = nullptr; // Pointer to the particle in this cell, if any
-    };
+      cells = new Cell[width * height];
+      display = new DisplayCell[width * height];
 
-    struct DisplayCell
+      // Reserve space to prevent vector reallocation which would invalidate pointers
+      particles.reserve(w * h); // Reserve space for reasonable number of particles
+
+      for (unsigned int i = 0; i < width * height; ++i)
+      {
+        display[i].r = 0.0f;
+        display[i].g = 0.0f;
+        display[i].b = 0.0f;
+        display[i].a = 0.0f; // Default alpha value for display cells
+      }
+    }
+
+    ~ParticleGrid()
     {
-        // int type;
-        float r, g, b, a; // Color for display purposes
-    };
+      delete[] cells;
+      delete[] display;
+      // Particles will be automatically cleaned up by the vector destructor
+    }
 
-    class ParticleGrid
+    Cell *getCells()
     {
-    private:
-        Cell *cells;
-        std::vector<Particle*> particles;
-        std::unordered_map<int, std::vector<Particle*>> particleMap; // Map for quick access to particles by their position
+      return cells;
+    }
 
-    public:
-        unsigned int width;
-        unsigned int height;
-        DisplayCell *display;
+    Cell *getCell(unsigned int x, unsigned int y)
+    {
+      if (x < width && y < height)
+      {
+        return &getCells()[y * width + x];
+      }
+      throw std::out_of_range("Grid coordinates out of bounds (getCell)");
+    }
 
-        ParticleGrid(unsigned int w, unsigned int h) : width(w), height(h)
+    void setDisplay(int x, int y, Particle *particle)
+    {
+      if (x >= 0 && y >= 0 && x < width && y < height)
+      {
+        // display[y * width + x].type = particle->type; // Update display cell type
+        display[y * width + x].r = particle->color.r;
+        display[y * width + x].g = particle->color.g;
+        display[y * width + x].b = particle->color.b;
+        display[y * width + x].a = 0.0f; // Default alpha
+      }
+      else
+      {
+        /*throw std::out_of_range("Grid coordinates out of bounds (setCell)");*/
+      }
+    }
+
+    void setCell(int x, int y, Particle *particle)
+    {
+      if (x >= 0 && y >= 0 && x < width && y < height)
+      {
+        if (getCell(x, y)->particle == nullptr && particle->visible)
         {
-            cells = new Cell[width * height];
-            display = new DisplayCell[width * height];
-
-            // Reserve space to prevent vector reallocation which would invalidate pointers
-            particles.reserve(w * h); // Reserve space for reasonable number of particles
-
-            for (unsigned int i = 0; i < width * height; ++i)
-            {
-              display[i].r = 0.0f;
-              display[i].g = 0.0f;
-              display[i].b = 0.0f;
-              display[i].a = 0.0f; // Default alpha value for display cells
-            }
+          getCell(x, y)->particle = particle; // Set the particle pointer in the cell
+          setDisplay(x, y, particle);         // Update display cell type
         }
 
-        ~ParticleGrid()
+        particleMap[x + y * width].push_back(particle); // Add particle to the map for quick access
+      }
+      else
+      {
+        /*throw std::out_of_range("Grid coordinates out of bounds (setCell)");*/
+      }
+    }
+
+    const std::vector<Particle *> &getParticles()
+    {
+      return particles;
+    }
+
+    std::vector<Particle *> &getParticlesAt(int x, int y)
+    {
+      if (x >= 0 && y >= 0 && x < width && y < height)
+      {
+        // check if it exists in the map, if not return empty vector
+        if (particleMap.find(x + y * width) != particleMap.end())
         {
-            delete[] cells;
-            delete[] display;
-            // Particles will be automatically cleaned up by the vector destructor
-        }
 
-        Cell *getCells()
+          return particleMap[x + y * width];
+        }
+        else
         {
-            return cells;
+          particleMap[x + y * width] = std::vector<Particle *>();
+          return particleMap[x + y * width]; // Return an empty vector if no particles are
         }
+      }
+      throw std::out_of_range("Grid coordinates out of bounds (getParticlesAt)");
+    }
 
-        Cell* getCell(unsigned int x, unsigned int y)
-        {
-            if (x < width && y < height)
-            {
-                return &getCells()[y * width + x];
-            }
-            throw std::out_of_range("Grid coordinates out of bounds (getCell)");
-        }
+    Particle *getParticle(int x, int y)
+    {
+      if (x >= 0 && y >= 0 && x < width && y < height)
+      {
+        int index = cellIndex(x, y);
+        return getCells()[index].particle;
+      }
+      return nullptr; // No particle found at the given coordinates
+    }
 
-        void setDisplay(int x, int y, Particle* particle)
-        {
-            if (x >= 0 && y >= 0 && x < width && y < height)
-            {
-                // display[y * width + x].type = particle->type; // Update display cell type
-                display[y * width + x].r = particle->color.r;
-                display[y * width + x].g = particle->color.g;
-                display[y * width + x].b = particle->color.b;
-                display[y * width + x].a = 0.0f; // Default alpha
-            }
-            else
-            {
-                /*throw std::out_of_range("Grid coordinates out of bounds (setCell)");*/
-            }
-        }
+    Particle *getOldParticle(unsigned int x, unsigned int y)
+    {
+      if (x < width && y < height)
+      {
+        int index = cellIndex(x, y);
+        return getCells()[index].lastParticle;
+      }
+      return nullptr; // No particle found at the given coordinates
+    }
 
-        void setCell(int x, int y, Particle* particle)
-        {
-            if (x >= 0 && y >= 0 && x < width && y < height)
-            {
-                if (getCell(x, y)->particle == nullptr && particle->visible) {
-                  getCell(x, y)->particle = particle; // Set the particle pointer in the cell
-                  setDisplay(x, y, particle); // Update display cell type
-                }
+    const int cellIndex(unsigned int x, unsigned int y) const
+    {
+      return y * width + x;
+    }
 
-                particleMap[x + y * width].push_back(particle); // Add particle to the map for quick access
-            }
-            else
-            {
-                /*throw std::out_of_range("Grid coordinates out of bounds (setCell)");*/
-            }
-        }
+    Particle *createParticle(int x, int y, int type)
+    {
+      switch (type)
+      {
+      case tfn::consts::EMPTY_CELL:
+        return new Particle(x, y, type);
+      case tfn::consts::SOLID_CELL:
+        return new tfn::particles::SolidParticle(x, y, type);
+      case tfn::consts::LIQUID_CELL:
+        return new tfn::particles::LiquidParticle(x, y, type);
+      case tfn::consts::SAND_CELL:
+        return new tfn::particles::SandParticle(x, y, type);
+      default:
+        throw std::invalid_argument("Unknown particle type");
+      }
+    }
 
-        const std::vector<Particle*>& getParticles()
-        {
-            return particles;
-        }
+    Particle *addParticle(unsigned int x, unsigned int y, int type)
+    {
+      // check if particle is already present at cell indexs
+      if (getParticle(x, y) != nullptr || type == tfn::consts::EMPTY_CELL)
+      // If the cell already has a particle or is empty, do not add a new one
+      {
+        return nullptr;
+      }
 
-        std::vector<Particle*>& getParticlesAt(int x, int y)
-        {
-            if (x >= 0 && y >= 0 && x < width && y < height)
-            {
-                return particleMap[x + y * width];
-            }
-            throw std::out_of_range("Grid coordinates out of bounds (getParticlesAt)");
-        }
+      if (x < width && y < height)
+      {
+        // particles.emplace_back(x, y, type);
+        // Particle &newParticle = particles.back();
 
-        Particle *getParticle(int x, int y)
-        {
-            if (x >= 0 && y >=0 && x < width && y < height)
-            {
-                int index = cellIndex(x, y);
-                return getCells()[index].particle;
-            }
-            return nullptr; // No particle found at the given coordinates
-        }
+        Particle *newParticle = createParticle(x, y, type);
+        particles.push_back(newParticle); // Add the new particle to the vector
+        newParticle->grid = this;
 
-        Particle *getOldParticle(unsigned int x, unsigned int y)
-        {
-            if (x < width && y < height)
-            {
-                int index = cellIndex(x, y);
-                return getCells()[index].lastParticle;
-            }
-            return nullptr; // No particle found at the given coordinates
-        }
+        getCell(x, y)->particle = newParticle; // Set the particle pointer in the cell
+        return newParticle;
+      }
 
-        const int cellIndex(unsigned int x, unsigned int y) const
-        {
-            return y * width + x;
-        }
+      throw std::out_of_range("Particle coordinates out of bounds");
+    }
 
-        Particle* createParticle (int x, int y, int type) {
-          switch (type) {
-            case tfn::consts::EMPTY_CELL:
-              return new Particle(x, y, type);
-            case tfn::consts::SOLID_CELL:
-              return new tfn::particles::SolidParticle(x, y, type);
-            case tfn::consts::LIQUID_CELL:
-              return new tfn::particles::LiquidParticle(x, y, type);
-            case tfn::consts::SAND_CELL:
-              return new tfn::particles::SandParticle(x, y, type);
-            default:
-              throw std::invalid_argument("Unknown particle type");
-          }
-        }
+    bool inBounds(int x, int y) const
+    {
+      return (x < width && y < height);
+    }
 
-        Particle* addParticle(unsigned int x, unsigned int y, int type)
-        {
-            // check if particle is already present at cell indexs
-            if (getParticle(x, y) != nullptr || type == tfn::consts::EMPTY_CELL)
-                // If the cell already has a particle or is empty, do not add a new one
-            {
-                return nullptr;
-            }
+    void clear()
+    {
+      for (unsigned int i = 0; i < width * height; ++i)
+      {
+        display[i].r = 0.0f;
+        display[i].g = 0.0f;
+        display[i].b = 0.0f;
+        display[i].a = 0.0f;
 
-            if (x < width && y < height)
-            {
-                // particles.emplace_back(x, y, type);
-                // Particle &newParticle = particles.back();
+        if (cells[i].particle != nullptr)
+          cells[i].particle->hasUpdated = false;
 
-                Particle* newParticle = createParticle(x, y, type);
-                particles.push_back(newParticle); // Add the new particle to the vector
-                newParticle->grid = this;
+        cells[i].lastParticle = cells[i].particle; // Store the last particle before clearing
+        cells[i].particle = nullptr;               // Clear the particle pointer in the cell
+      }
 
-                getCell(x, y)->particle = newParticle; // Set the particle pointer in the cell
-                return newParticle;
-            }
+      particleMap.clear(); // Clear the particle map
+    }
 
-            throw std::out_of_range("Particle coordinates out of bounds");
-        }
+    void update(float dt, bool simulate = false);
 
-        bool inBounds(int x, int y) const
-        {
-            return (x < width && y < height);
-        }
-
-        void clear()
-        {
-            for (unsigned int i = 0; i < width * height; ++i)
-            {
-                display[i].r = 0.0f;
-                display[i].g = 0.0f;
-                display[i].b = 0.0f;
-                display[i].a = 0.0f;
-
-                if (cells[i].particle != nullptr) cells[i].particle->hasUpdated = false;
-
-                cells[i].lastParticle = cells[i].particle; // Store the last particle before clearing
-                cells[i].particle = nullptr; // Clear the particle pointer in the cell
-            }
-
-            particleMap.clear(); // Clear the particle map
-        }
-
-        void update(float dt, bool simulate = false);
-
-        void cleanup() {
-            for (auto particle : particles) {
-                delete particle; // Clean up each particle
-            }
-            particles.clear(); // Clear the vector of particles
-        }
-    };
+    void cleanup()
+    {
+      for (auto particle : particles)
+      {
+        delete particle; // Clean up each particle
+      }
+      particles.clear(); // Clear the vector of particles
+    }
+  };
 
 }

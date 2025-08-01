@@ -226,6 +226,7 @@ namespace physics
 
         p->hasUpdated = true;
 
+
         // Debug
         // p->assign();
         particleMap[p->x + p->y * p->grid->width] = p; // Store particle in map for quick access
@@ -310,6 +311,10 @@ namespace physics
 
         glm::ivec2 target = checkBuffer[moveTo];
 
+        if (moveTo == 0) {
+          other->visible = false;
+        }
+
 
         tfn::Debug::getInstance().drawLine(
             glm::vec2(other->x, other->y),
@@ -332,7 +337,7 @@ namespace physics
         other->y = other->absPos.y;
 
         other->hasUpdated = true;       // Mark as updated
-        glm::vec2 collisionNormal = glm::vec2(offset.x, offset.y);
+        glm::vec2 collisionNormal = glm::normalize(glm::vec2(offset.x, offset.y));
         other->velocity = other->velocity - 2.0f * ((other->velocity - p->velocity) * collisionNormal) * collisionNormal; // Acquire velocity from the moving particle
         // other->assign();
       }
@@ -355,10 +360,25 @@ namespace physics
   void Solver::renderOnTop() {
     for (int i = 0; i < bodyCount; i++)
     {
-      SBody &b = *bodies[i];
-      for (auto &p : b.particles)
+      SBody* body = bodies[i];
+
+      
+
+      for (auto &p : body->particles)
       {
         p->assign();
+        for (int dx = -1; dx <= 1; ++dx)
+        for (int dy = -1; dy <= 1; ++dy) {
+          int nx = p->x + dx;
+          int ny = p->y + dy;
+          if (p->grid->inBounds(nx, ny)) {
+            glm::vec2 cellCenter = glm::vec2(nx + 0.5f, ny + 0.5f);
+            float dist = glm::distance(cellCenter, p->absPos);
+            if (dist < 1.0f) {
+              p->grid->setDisplay(nx, ny, p->color);
+            }
+          }
+        }
       }
     };
   }

@@ -13,8 +13,8 @@ namespace game
 {
   const unsigned int SCR_WIDTH = 800;
   const unsigned int SCR_HEIGHT = 800;
-  const unsigned int GRID_WIDTH = 100;
-  const unsigned int GRID_HEIGHT = 100;
+  const unsigned int GRID_WIDTH = 200;
+  const unsigned int GRID_HEIGHT = 200;
 
   tfn::ComputeRenderer renderer;
   tfn::ParticleGrid particleGrid(GRID_WIDTH, GRID_HEIGHT);

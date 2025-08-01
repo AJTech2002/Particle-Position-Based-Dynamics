@@ -117,6 +117,7 @@ void SandParticle::simulate(float dt)
   if (testPos != curPos)
     velocity.x *= 0.95; 
 
+  if (canMove(testPos))
   // check if liquid particle is present at the new position
   if (grid->inBounds(newX, newY)) {
     Particle *liquidParticle = grid->getParticle(newX, newY);
@@ -127,6 +128,9 @@ void SandParticle::simulate(float dt)
       x = newX;
       y = newY;
       // Otherwise, treat it as blocked
+
+      if (liquidParticle->hasUpdated) 
+        liquidParticle->assign();
     }
     else {
       x = newX;

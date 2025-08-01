@@ -12,9 +12,6 @@ void tfn::ParticleGrid::update(float dt, bool simulate) {
   std::shuffle(particles.begin(), particles.end(), rng);
 
   for (auto& particle : particles) {
-
-    
-
     if (simulate)  {
       int oldX = particle->x;
       int oldY = particle->y;
@@ -25,6 +22,8 @@ void tfn::ParticleGrid::update(float dt, bool simulate) {
       if (inBounds(particle->x, particle->y)) {
         setCell(particle->x, particle->y, particle);
       }
+
+      particle->visible = true;
     }
   }
 }

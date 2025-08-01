@@ -90,6 +90,22 @@ namespace tfn
       }
     }
 
+    void setDisplay(int x, int y,  glm::vec3 col)
+    {
+      if (x >= 0 && y >= 0 && x < width && y < height)
+      {
+        // display[y * width + x].type = particle->type; // Update display cell type
+        display[y * width + x].r = col.r;
+        display[y * width + x].g = col.g;
+        display[y * width + x].b = col.b;
+        display[y * width + x].a = 0.0f; // Default alpha
+      }
+      else
+      {
+        /*throw std::out_of_range("Grid coordinates out of bounds (setCell)");*/
+      }
+    }
+
     void setCell(int x, int y, Particle *particle)
     {
       if (x >= 0 && y >= 0 && x < width && y < height)

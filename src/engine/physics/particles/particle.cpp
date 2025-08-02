@@ -122,14 +122,8 @@ tfn::Particle *tfn::Particle::getOldNeighbour (tfn::Direction dir) const
 void tfn::Particle::simulate(float dt)
 {
   hasUpdated = true; // Mark this particle as updated
-    if (type == 0) {
-            color = glm::vec3(0.0f, 0.0f, 0.0f); // Default color for empty particles
-          } else if (type == 1) {
-            color = glm::vec3(1.0f, 0.0f, 0.0f); // Solid particle color
-          } else if (type == 2) {
-            color = glm::vec3(0.0f, 1.0f, 0.0f); // Liquid particle color
-          } else if (type == 3) {
-            color = glm::vec3(1.0f, 1.0f, 0.0f); // Sand particle color
-          }
+  color = restColor; // Reset color to restColor
+
+
 
 }

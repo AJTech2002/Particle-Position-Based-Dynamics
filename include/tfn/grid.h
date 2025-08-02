@@ -3,6 +3,7 @@
 #include "tfn/particle.h"
 #include "tfn/constants.h"
 #include <vector>
+#include <array>
 #include <unordered_map>
 
 // Particle types
@@ -16,6 +17,9 @@ namespace tfn
   {
     Particle *lastParticle = nullptr; // Pointer to the last particle added to this cell
     Particle *particle = nullptr;     // Pointer to the particle in this cell, if any
+
+    // Per cell values
+    float divergence = 0.0f; // Divergence value for the cell
   };
 
   struct DisplayCell
@@ -129,6 +133,22 @@ namespace tfn
       return particles;
     }
 
+    std::array<const Cell*, 8> getNeighbouringCells(int x, int y) {
+      std::array<const Cell*, 8> neighbours{};
+      int index = 0;
+      for (int dx = -1; dx <= 1; ++dx) {
+        for (int dy = -1; dy <= 1; ++dy) {
+          if (dx == 0 && dy == 0) continue;
+          int nx = x + dx;
+          int ny = y + dy;
+          if (nx >= 0 && ny >= 0 && nx < width && ny < height) {
+            neighbours[index++] = getCell(nx, ny);
+          }
+        }
+      }
+      return neighbours;
+    }
+
     std::vector<Particle *> &getParticlesAt(int x, int y)
     {
       if (x >= 0 && y >= 0 && x < width && y < height)
@@ -148,7 +168,7 @@ namespace tfn
       throw std::out_of_range("Grid coordinates out of bounds (getParticlesAt)");
     }
 
-    Particle *getParticle(int x, int y)
+    Particle* getParticle(int x, int y)
     {
       if (x >= 0 && y >= 0 && x < width && y < height)
       {
@@ -157,6 +177,18 @@ namespace tfn
       }
       return nullptr; // No particle found at the given coordinates
     }
+
+    glm::vec2 getVelocity (int x, int y)
+    {
+      Particle* p = getParticle(x, y);
+      if (p != nullptr)
+      {
+        return p->velocity;
+      }
+
+      return glm::vec2(0.0f, 0.0f); // Return zero velocity if no particle is found
+    }
+
 
     Particle *getOldParticle(unsigned int x, unsigned int y)
     {
@@ -240,6 +272,8 @@ namespace tfn
     }
 
     void update(float dt, bool simulate = false);
+
+    void debug();
 
     void cleanup()
     {

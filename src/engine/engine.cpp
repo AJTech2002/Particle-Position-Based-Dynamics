@@ -20,6 +20,8 @@ namespace game
   tfn::ParticleGrid particleGrid(GRID_WIDTH, GRID_HEIGHT);
   physics::Solver solver;
 
+  bool debugGrid = true;
+
   void Engine::init(void)
   {
     srand(static_cast<unsigned>(time(0)));
@@ -125,7 +127,6 @@ namespace game
         solver.propogate(fixedTimestep);
       }
 
-      solver.renderOnTop();
 
       accumulatedFixedTimestep -= fixedTimestep;
     }
@@ -136,8 +137,12 @@ namespace game
       simulate = false;
     }
 
+    solver.renderOnTop();
+    if (debugGrid)
+      particleGrid.debug(); // Debugging grid state
     renderer.update(particleGrid.display);
     solver.debugDraw();
+    
     renderer.render();
 
     _frame++;
@@ -176,6 +181,12 @@ namespace game
           brushSize--;
           std::cout << "Brush size decreased to: " << brushSize << std::endl;
         }
+      }
+
+      if (event->key_code == SAPP_KEYCODE_C)
+      {
+        debugGrid = !debugGrid;
+        std::cout << "Debug grid: " << (debugGrid ? "ON" : "OFF") << std::endl;
       }
 
       if (event->key_code == SAPP_KEYCODE_B && !pressingBrush)

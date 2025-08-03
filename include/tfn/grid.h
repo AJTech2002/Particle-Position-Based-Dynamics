@@ -75,7 +75,8 @@ namespace tfn
       {
         return &getCells()[y * width + x];
       }
-      throw std::out_of_range("Grid coordinates out of bounds (getCell)");
+      // throw std::out_of_range("Grid coordinates out of bounds (getCell)");
+      return nullptr;
     }
 
     void setDisplay(int x, int y, Particle *particle)
@@ -189,6 +190,16 @@ namespace tfn
       return glm::vec2(0.0f, 0.0f); // Return zero velocity if no particle is found
     }
 
+    float getDensity (int x, int y)
+    {
+      Particle* p = getParticle(x, y);
+      if (p != nullptr)
+      {
+        return p->density;
+      }
+
+      return 0.0f;
+    }
 
     Particle *getOldParticle(unsigned int x, unsigned int y)
     {

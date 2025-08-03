@@ -125,6 +125,15 @@ namespace physics
           solid->triIndex = i / 3;
           solid->body = b;
 
+          b->shape.points[pA].mass += 0.01f * res.bary.x;
+          b->shape.points[pB].mass += 0.01f * res.bary.y;
+          b->shape.points[pC].mass += 0.01f * res.bary.z;
+
+          // clamp masses
+          b->shape.points[pA].mass = glm::clamp(b->shape.points[pA].mass, 0.1f, 2.0f);
+          b->shape.points[pB].mass = glm::clamp(b->shape.points[pB].mass, 0.1f, 2.0f);
+          b->shape.points[pC].mass = glm::clamp(b->shape.points[pC].mass, 0.1f, 2.0f);
+
           b->particles.push_back(solid);
           /*std::cout << "Found tri: " << solid->triIndex << std::endl; */
           break;
@@ -140,7 +149,7 @@ namespace physics
 
   };
 
-  glm::vec2 maxVelocity = glm::vec2(10.0f, 500.0f); // Max velocity to prevent too fast movement
+  glm::vec2 maxVelocity = glm::vec2(500.0f, 500.0f); // Max velocity to prevent too fast movement
 
   void Solver::simulate(float dt)
   {
@@ -156,9 +165,13 @@ namespace physics
         // 1. Apply gravity (predict positions)
         for (auto &p : b.shape.points)
         {
-          p.vel += glm::vec2(0, -9.81f * 30.0f) * subDt;
-          p.prevPos = p.pos;      // store for velocity update later
-          p.pos += p.vel * subDt; // predicted position
+          p.vel += glm::vec2(0, -9.81f * 10.0f) * p.mass * subDt +
+                   (p.force / p.mass) * subDt ; // Apply gravity and force
+          p.vel = glm::clamp(p.vel, -maxVelocity, maxVelocity); // Clamp velocity
+          p.force = glm::vec2(0.0f, 0.0f);   // Reset force after applying
+          p.lastForce = p.force;             // Store last force for debugging
+          p.prevPos = p.pos;                 // store for velocity update later
+          p.pos += p.vel * subDt;            // predicted position
         }
 
         // 2. Solve constraints (iterative position projection)
@@ -178,10 +191,11 @@ namespace physics
           p.vel = (p.pos - p.prevPos) / subDt;
           /*p.pos = glm::clamp(p.pos, glm::vec2(-400, -400), glm::vec2(400, 400));*/
 
-          if (p.pos.y < 0)
+          if (p.pos.y <= 0)
           {
             p.pos.y = 0;
             p.vel.y *= -0.75;
+            p.vel.x *= 0.75; // Dampen velocity on ground contact
           }
 
           // Clamp velocities to support stepping through to resolve overlaps
@@ -219,13 +233,13 @@ namespace physics
         p->absPos.x = newPos.x;
         p->absPos.y = newPos.y;
 
-        p->grid->getCell(p->x, p->y)->particle = nullptr;
+        if (p->grid->getCell(p->x, p->y) != nullptr)
+          p->grid->getCell(p->x, p->y)->particle = nullptr;
 
         p->x = glm::round(newPos.x);
         p->y = glm::round(newPos.y);
 
         p->hasUpdated = true;
-
 
         // Debug
         // p->assign();
@@ -279,55 +293,62 @@ namespace physics
         glm::ivec2 start = glm::ivec2(other->x, other->y);
         glm::ivec2 offset = glm::ivec2(other->x - p->lastPosI.x, other->y - p->lastPosI.y);
         glm::vec2 endCheck = glm::vec2(p->x, p->y) + glm::vec2(offset.x, offset.y);
+        glm::ivec2 mainOffset = glm::ivec2(p->x - p->lastPosI.x, p->y - p->lastPosI.y);
+        mainOffset = glm::clamp(mainOffset, glm::ivec2(-1, -1), glm::ivec2(1, 1)); // Clamp to prevent too large offsets
 
+        // glm::ivec2 checkBuffer[2000];
+        // int size = math::getLinePixels(
+        //     glm::ivec2(p->x, p->y),
+        //     endCheck,
+        //     checkBuffer,
+        //     2000);
 
-        glm::ivec2 checkBuffer[2000];
-        int size = math::getLinePixels(
-            glm::ivec2(p->x, p->y),
-            endCheck,
-            checkBuffer,
-             2000
-          );
+        // int moveTo = 0;
+        // for (int i = 1; i < glm::min(2000, size); i++)
+        // {
+        //   glm::ivec2 &testPos = checkBuffer[i];
+        //   if (!p->grid->inBounds(testPos.x, testPos.y))
+        //   {
+        //     break;
+        //   }
 
-        int moveTo = 0;
-        for (int i = 1; i < glm::min(2000, size); i++)
+        //   if (particleMap.find(testPos.x + testPos.y * p->grid->width) == particleMap.end())
+        //   {
+        //     // If the cell is empty, continue to the next cell
+        //     moveTo = i;
+        //     break;
+        //   }
+        //   else
+        //   {
+        //   }
+        // }
+
+        glm::ivec2 testPos = glm::ivec2(p->x + mainOffset.x, p->y + mainOffset.y);
+        glm::ivec2 target = start;
+
+        if (particleMap.find(testPos.x + testPos.y * p->grid->width) == particleMap.end())
         {
-          glm::ivec2 &testPos = checkBuffer[i];
-          if (!p->grid->inBounds(testPos.x, testPos.y))
-          {
-            break;
-          }
-
-          if (particleMap.find(testPos.x + testPos.y * p->grid->width) == particleMap.end())
-          {
-            // If the cell is empty, continue to the next cell
-            moveTo = i;
-            break;
-          }
-          else {
-            
-          }
-        }
-
-        glm::ivec2 target = checkBuffer[moveTo];
-
-        if (moveTo == 0) {
-          other->visible = false;
+          target = testPos; // If the cell is empty, move to the target position
         }
 
 
-        tfn::Debug::getInstance().drawLine(
-            glm::vec2(other->x, other->y),
-            glm::ivec2(endCheck.x, endCheck.y),
-            glm::vec3(0.0f, 1.0f, 0.0f),
-        0.4f);
-            
-        tfn::Debug::getInstance().drawLine(
-            glm::vec2(other->x+0.5f, other->y+0.5f),
-            glm::vec2(target.x+0.5f, target.y+0.5f),
-            glm::vec3(1.0f, 1.0f, 1.0f),
-            0.4f);
-            
+        if (target == start)
+        {
+          // other->visible = false;
+          continue;
+        }
+
+        // tfn::Debug::getInstance().drawLine(
+        //     glm::vec2(other->x, other->y),
+        //     glm::ivec2(endCheck.x, endCheck.y),
+        //     glm::vec3(0.0f, 1.0f, 0.0f),
+        //     0.4f);
+
+        // tfn::Debug::getInstance().drawLine(
+        //     glm::vec2(other->x + 0.5f, other->y + 0.5f),
+        //     glm::vec2(target.x + 0.5f, target.y + 0.5f),
+        //     glm::vec3(1.0f, 1.0f, 1.0f),
+        //     0.4f);
 
         other->absPos = glm::vec2(target.x, target.y);
         other->lastPos = glm::vec2(other->x, other->y);
@@ -336,49 +357,111 @@ namespace physics
         other->x = other->absPos.x;
         other->y = other->absPos.y;
 
-        other->hasUpdated = true;       // Mark as updated
+        other->hasUpdated = true; // Mark as updated
         glm::vec2 collisionNormal = glm::normalize(glm::vec2(offset.x, offset.y));
         other->velocity = other->velocity - 2.0f * ((other->velocity - p->velocity) * collisionNormal) * collisionNormal; // Acquire velocity from the moving particle
         // other->assign();
       }
 
       // Update particle positions in the grid
-     
-
       for (auto &p : body->particles)
       {
         p->assign();
+
+        for (int dx = -1; dx <= 1; ++dx)
+          for (int dy = -1; dy <= 1; ++dy)
+          {
+            if (dx == 0 && dy == 0)
+              continue;
+
+            int nx = p->x + dx;
+            int ny = p->y + dy;
+
+            if (!p->grid->inBounds(nx, ny))
+              continue;
+
+            tfn::Particle *neighbor = p->grid->getParticle(nx, ny);
+            if (!neighbor || neighbor->density <= 0.0f || neighbor->type == tfn::consts::SOLID_CELL)
+              continue;
+
+            float densityAtCell = neighbor->density;
+            float friction = neighbor->friction;
+
+            // Compute pressure-based force (normal force)
+            glm::vec2 normal = glm::normalize(glm::vec2(dx, dy));
+            glm::vec2 offset = -normal * 0.5f * densityAtCell;
+
+            // Scale based on how aligned velocity is with the contact normal
+            float alignment = glm::dot(glm::normalize(p->velocity), normal);
+            offset *= glm::abs(alignment);
+
+            if (std::isnan(offset.x) || std::isnan(offset.y))
+              offset = glm::vec2(0.0f);
+
+            // Get triangle data
+            int tri = p->triIndex * 3;
+            int pA = body->shape.mesh[tri + 0];
+            int pB = body->shape.mesh[tri + 1];
+            int pC = body->shape.mesh[tri + 2];
+
+            // --- Apply pressure (normal) force
+            body->shape.points[pA].force += offset * p->bary.x;
+            body->shape.points[pB].force += offset * p->bary.y;
+            body->shape.points[pC].force += offset * p->bary.z;
+
+            // --- Compute friction force
+            glm::vec2 tangent(-normal.y, normal.x);
+            glm::vec2 relativeVel = p->velocity - neighbor->velocity;
+            float slip = glm::dot(relativeVel, tangent);
+            glm::vec2 frictionForce = -friction * slip * tangent;
+
+            // Optional: cap to Coulomb model
+            float maxFriction = glm::length(offset) * friction;
+            if (glm::length(frictionForce) > maxFriction)
+              frictionForce = glm::normalize(frictionForce) * maxFriction;
+
+          if (std::isnan(frictionForce.x) || std::isnan(frictionForce.y))
+            frictionForce = glm::vec2(0.0f);
+
+            // Apply friction force
+            body->shape.points[pA].force += frictionForce * p->bary.x;
+            body->shape.points[pB].force += frictionForce * p->bary.y;
+            body->shape.points[pC].force += frictionForce * p->bary.z;
+
+          }
       }
 
-       for (tfn::Particle *other : _particlesAlongPathUpdated)
+      for (tfn::Particle *other : _particlesAlongPathUpdated)
       {
         other->assign();
       }
     }
   }
 
-  void Solver::renderOnTop() {
+  void Solver::renderOnTop()
+  {
     for (int i = 0; i < bodyCount; i++)
     {
-      SBody* body = bodies[i];
-
-      
+      SBody *body = bodies[i];
 
       for (auto &p : body->particles)
       {
         p->assign();
         for (int dx = -1; dx <= 1; ++dx)
-        for (int dy = -1; dy <= 1; ++dy) {
-          int nx = p->x + dx;
-          int ny = p->y + dy;
-          if (p->grid->inBounds(nx, ny)) {
-            glm::vec2 cellCenter = glm::vec2(nx + 0.5f, ny + 0.5f);
-            float dist = glm::distance(cellCenter, p->absPos);
-            if (dist < 1.0f) {
-              p->grid->setDisplay(nx, ny, p->color);
+          for (int dy = -1; dy <= 1; ++dy)
+          {
+            int nx = p->x + dx;
+            int ny = p->y + dy;
+            if (p->grid->inBounds(nx, ny))
+            {
+              glm::vec2 cellCenter = glm::vec2(nx + 0.5f, ny + 0.5f);
+              float dist = glm::distance(cellCenter, p->absPos);
+              if (dist < 1.0f)
+              {
+                p->grid->setDisplay(nx, ny, p->color);
+              }
             }
           }
-        }
       }
     };
   }
@@ -389,10 +472,7 @@ namespace physics
     for (int i = 0; i < bodyCount; i++)
     {
       SBody &b = *bodies[i];
-      for (const auto &p : b.shape.points)
-      {
-        tfn::Debug::getInstance().drawSquare(p.pos, glm::vec2(1, 1));
-      };
+
 
       for (int i = 0; i < b.shape.mesh.size(); i += 3)
       {
@@ -404,9 +484,9 @@ namespace physics
         glm::vec2 posB = b.shape.points[pB].pos;
         glm::vec2 posC = b.shape.points[pC].pos;
 
-        tfn::Debug::getInstance().drawLine(posA, posB);
-        tfn::Debug::getInstance().drawLine(posC, posB);
-        tfn::Debug::getInstance().drawLine(posA, posC);
+        // tfn::Debug::getInstance().drawLine(posA, posB);
+        // tfn::Debug::getInstance().drawLine(posC, posB);
+        // tfn::Debug::getInstance().drawLine(posA, posC);
       }
       /*for (const auto& c : b.constraints) {*/
       /*  if (c.type == ConstraintType::SPRING)*/

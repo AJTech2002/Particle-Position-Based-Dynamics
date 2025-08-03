@@ -36,44 +36,55 @@ tfn::Direction getMoveableSandDirection(SandParticle *particle)
   return tfn::Direction::NONE; // No valid move found
 }
 
+glm::ivec2 SandParticle::nextAvailableCellAlongVelocity (glm::vec2 velocity, float dt) {
+  glm::ivec2 pos = {x,y};
+  glm::vec2 predPos = glm::vec2(pos.x,pos.y) + velocity * dt; 
+  glm::ivec2 predPosI = glm::ivec2(glm::round(predPos.x), glm::round(predPos.y));
+
+  // check if it can move in velocity dir
+  glm::ivec2 checkBuffer[500];
+  int size = math::getLinePixels(
+      pos,
+      predPosI,
+      checkBuffer
+  );  
+  int movedBlocks = 0;
+  for (int i = 1; i < size; i++) {
+    glm::ivec2& testPos = checkBuffer[i];
+    if (!canMove(testPos)) {
+      break;
+    }
+
+    movedBlocks = i;
+    Particle *newNeighbor = grid->getParticle(checkBuffer[i].x, checkBuffer[i].y);
+    Particle *oldNeighbor = grid->getOldParticle(checkBuffer[i].x, checkBuffer[i].y); 
+
+    if (newNeighbor && newNeighbor->type == tfn::consts::LIQUID_CELL)
+    {
+      if (oldNeighbor && oldNeighbor->type == tfn::consts::LIQUID_CELL)
+      {
+        // If both old and new neighbors are liquid particles, continue
+        return {newNeighbor->x, newNeighbor->y};
+      }
+      // If a liquid particle is found, return its position
+      return {newNeighbor->x, newNeighbor->y};
+    }
+
+  }
+ 
+  int newX = checkBuffer[movedBlocks].x;
+  int newY = checkBuffer[movedBlocks].y;
+
+  //  tfn::Debug::drawLine(
+  //   glm::vec2(pos.x, pos.y),
+  //   glm::vec2(newX, newY),
+  //   glm::vec3(0.0f, 1.0f, 0.0f)
+  // );
+
+  return {newX, newY};
+}
+
 glm::vec2 maxVelocity (2500.0, 2500.0);
-
-bool SandParticle::canMove(tfn::Direction dir)
-{
-  std::pair<int, int> offset = getDirectionOffset(dir);
-  int newX = x + offset.first;
-  int newY = y + offset.second;
-
-  if (!grid->inBounds(newX, newY))
-  {
-    return false; // Out of bounds
-  }
-
-  Particle *oldNeighbor = getOldNeighbour(dir);
-  Particle *newNeighbor = grid->getParticle(newX, newY);
-
-  // Can move into liquids
-  return ((oldNeighbor == nullptr || oldNeighbor->type == tfn::consts::LIQUID_CELL) &&
-          (newNeighbor == nullptr || newNeighbor->type == tfn::consts::LIQUID_CELL));
-}
-
-bool SandParticle::canMove(glm::ivec2 newPos) {
-  int newX = newPos.x;
-  int newY = newPos.y;
-
-  if (!grid->inBounds(newX, newY))
-  {
-    return false; // Out of bounds
-  }
-
-  Particle *oldNeighbor = grid->getOldParticle(newX, newY); 
-  Particle *newNeighbor = grid->getParticle(newX, newY);
-
-  // Can move into liquids
-  return ((oldNeighbor == nullptr || oldNeighbor->type == tfn::consts::LIQUID_CELL) &&
-      (newNeighbor == nullptr || newNeighbor->type == tfn::consts::LIQUID_CELL));
-}
-
 
 float scatterDistance = 100.0;
 
@@ -123,14 +134,14 @@ void SandParticle::simulate(float dt)
     Particle *liquidParticle = grid->getParticle(newX, newY);
     if (liquidParticle && liquidParticle->type == tfn::consts::LIQUID_CELL)
     {
-      liquidParticle->x = x; // Update liquid particle position
-      liquidParticle->y = y; // Update liquid particle position
-      x = newX;
-      y = newY;
-      // Otherwise, treat it as blocked
-
-      if (liquidParticle->hasUpdated) 
-        liquidParticle->assign();
+      /*liquidParticle->x = x; // Update liquid particle position*/
+      /*liquidParticle->y = y; // Update liquid particle position*/
+      /*x = newX;*/
+      /*y = newY;*/
+      /*// Otherwise, treat it as blocked*/
+      /**/
+      /*if (liquidParticle->hasUpdated) */
+      /*  liquidParticle->assign();*/
     }
     else {
       x = newX;

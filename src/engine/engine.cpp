@@ -20,7 +20,7 @@ namespace game
   tfn::ParticleGrid particleGrid(GRID_WIDTH, GRID_HEIGHT);
   physics::Solver solver;
 
-  bool debugGrid = true;
+  bool debugGrid = false;
 
   void Engine::init(void)
   {
@@ -115,10 +115,10 @@ namespace game
         solver.simulate(fixedTimestep);
       }
       
-      if (simulate)
-      {
-        solver.propogate(fixedTimestep);
-      }
+      // if (simulate)
+      // {
+      //   solver.propogate(fixedTimestep);
+      // }
 
       particleGrid.update(fixedTimestep, simulate);
 

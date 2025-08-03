@@ -28,25 +28,25 @@ void tfn::ParticleGrid::update(float dt, bool simulate)
         setCell(particle->x, particle->y, particle);
       }
 
-      particle->visible = true;
+      // particle->visible = true;
     }
   }
 
   // Compute divergency / pressure (TODO: Perhaps do this with particle update)
 
-  for (int x = 1; x < width - 1; ++x)
-  {
-    for (int y = 1; y < height - 1; ++y)
-    {
-      glm::vec2 vR = getVelocity(x + 1, y);
-      glm::vec2 vL = getVelocity(x - 1, y);
-      glm::vec2 vU = getVelocity(x, y + 1);
-      glm::vec2 vD = getVelocity(x, y - 1);
+  // for (int x = 1; x < width - 1; ++x)
+  // {
+  //   for (int y = 1; y < height - 1; ++y)
+  //   {
+  //     glm::vec2 vR = getVelocity(x + 1, y);
+  //     glm::vec2 vL = getVelocity(x - 1, y);
+  //     glm::vec2 vU = getVelocity(x, y + 1);
+  //     glm::vec2 vD = getVelocity(x, y - 1);
 
-      float div = (vR.x - vL.x + vU.y - vD.y) * 0.5f;
-      getCell(x, y)->divergence = div;
-    }
-  }
+  //     float div = (vR.x - vL.x + vU.y - vD.y) * 0.5f;
+  //     getCell(x, y)->divergence = div;
+  //   }
+  // }
 }
 
 void tfn::ParticleGrid::debug()

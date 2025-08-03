@@ -10,7 +10,8 @@ namespace tfn::particles
       ~SandParticle() override;  // ✅ Add this line
 
     void simulate(float dt) override;
-    bool canMove(Direction dir) override;
-    bool canMove(glm::ivec2 pos) override;
+    /*bool canMove(Direction dir) override;*/
+    /*bool canMove(glm::ivec2 pos) override;*/
+    glm::ivec2 nextAvailableCellAlongVelocity(glm::vec2 velocity, float dt) override;
   };
 }

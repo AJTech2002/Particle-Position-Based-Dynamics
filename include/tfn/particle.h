@@ -65,6 +65,8 @@ namespace tfn
         glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f); // Default color
 
         float density = 0.0f; // Density for the particle
+        float friction = 0.0f; // Friction for the particle
+        float bounce = 0.0f; // Bounce factor for the particle
 
         bool hasUpdated = false;
         Particle(unsigned int x, unsigned int y, int type) : x(x), y(y), type(type), absPos(x,y) {
@@ -77,11 +79,13 @@ namespace tfn
             density = 1.0f; // Default density for solid particles
           } else if (type == 2) {
             restColor = glm::vec3(0.0f, 1.0f, 0.0f); // Liquid particle color
-            density = 0.7f; // Default density for liquid particles
+            density = 50.0f; // Default density for liquid particles
+            friction = 0.01f; // Default friction for liquid particles 
           } else if (type == 3) {
-            restColor = glm::vec3(1.0f, 1.0f, 0.0f); // Sand particle color
+            restColor = glm::vec3(0.2f, 0.2f, 0.2f); // Sand particle color
           restColor *= 0.8f + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 0.4f; // Randomly darken the color
-            density = 0.3f;
+            density = 100.0f;
+            friction = 5.0f; // Default friction for sand particles
           }
 
           // add some variation in darkness

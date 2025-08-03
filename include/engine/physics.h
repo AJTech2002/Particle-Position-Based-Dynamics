@@ -20,7 +20,8 @@ namespace physics {
     glm::vec2 pos;
     glm::vec2 vel;
     glm::vec2 force;
-    float mass = 1.0;
+    glm::vec2 lastForce;
+    float mass = 0.0f;
     glm::vec2 prevPos;
   };
 

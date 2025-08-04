@@ -28,7 +28,6 @@ void tfn::ParticleGrid::update(float dt, bool simulate)
         setCell(particle->x, particle->y, particle);
       }
 
-      // particle->visible = true;
     }
   }
 

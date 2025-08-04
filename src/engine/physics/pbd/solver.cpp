@@ -262,7 +262,7 @@ namespace physics
 
         for (tfn::Particle *other : _particlesAlongPath)
         {
-          if (other == p)
+          if (other == p) 
             continue; // Skip self
           if (other->type == tfn::consts::SOLID_CELL)
             continue; // Skip solid cells
@@ -334,7 +334,6 @@ namespace physics
 
         if (target == start)
         {
-          // other->visible = false;
           continue;
         }
 
@@ -359,7 +358,8 @@ namespace physics
 
         other->hasUpdated = true; // Mark as updated
         glm::vec2 collisionNormal = glm::normalize(glm::vec2(offset.x, offset.y));
-        other->velocity = other->velocity - 2.0f * ((other->velocity - p->velocity) * collisionNormal) * collisionNormal; // Acquire velocity from the moving particle
+        other->velocity = glm::vec2(0.0f, 0.0f); // Reset velocity to prevent further movement 
+          //other->velocity - 2.0f * ((other->velocity - p->velocity) * collisionNormal) * collisionNormal; // Acquire velocity from the moving particle
         // other->assign();
       }
 
@@ -411,7 +411,7 @@ namespace physics
 
             // --- Compute friction force
             glm::vec2 tangent(-normal.y, normal.x);
-            glm::vec2 relativeVel = p->velocity - neighbor->velocity;
+            glm::vec2 relativeVel = p->velocity;
             float slip = glm::dot(relativeVel, tangent);
             glm::vec2 frictionForce = -friction * slip * tangent;
 

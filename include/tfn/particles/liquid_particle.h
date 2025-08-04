@@ -22,10 +22,10 @@ namespace tfn::particles
           // Spread sideways when blocked
           int dir = (math::randMultiplier() > 0 ? 1 : -1);
           if (canMove({x + dir, y - 1})) {
-            velocity.x += dt * 1500.0f * dir;
+            velocity.x += dt * 2500.0f * dir;
             velocity.y *= 0.95f;
           } else if (canMove({x - dir, y - 1})) {
-            velocity.x += dt * -1500.0f * dir;
+            velocity.x += dt * -2500.0f * dir;
             velocity.y *= 0.95f;
           }
           else if (canMove({x + dir, y})) {
@@ -44,7 +44,7 @@ namespace tfn::particles
         x = nextPos.x;
         y = nextPos.y;
 
-        velocity *= 0.95f; // damping
+        /*velocity *= 0.95f; // damping*/
       }
   };
 }

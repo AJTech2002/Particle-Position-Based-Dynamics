@@ -107,6 +107,16 @@ void SandParticle::simulate(float dt)
   if (testPos == curPos) {
     // Spread sideways when blocked
     int dir = (math::randMultiplier() > 0 ? 1 : -1);
+    Particle *neighbor = getNeighbor(tfn::Direction::DOWN);
+    if (neighbor && neighbor->type == tfn::consts::LIQUID_CELL) {
+      // If there's a liquid particle below, move to it
+      neighbor->x = x;
+      neighbor->y = y;
+      x = neighbor->x;
+      y = neighbor->y;
+      neighbor->assign();
+      return;
+    }
     if (canMove({x + dir, y - 1})) {
       velocity.x += dt * 600.0f * dir;
       velocity.y *= 0.95f;
@@ -129,24 +139,9 @@ void SandParticle::simulate(float dt)
     velocity.x *= 0.95; 
 
   if (canMove(testPos))
-  // check if liquid particle is present at the new position
   if (grid->inBounds(newX, newY)) {
-    Particle *liquidParticle = grid->getParticle(newX, newY);
-    if (liquidParticle && liquidParticle->type == tfn::consts::LIQUID_CELL)
-    {
-      /*liquidParticle->x = x; // Update liquid particle position*/
-      /*liquidParticle->y = y; // Update liquid particle position*/
-      /*x = newX;*/
-      /*y = newY;*/
-      /*// Otherwise, treat it as blocked*/
-      /**/
-      /*if (liquidParticle->hasUpdated) */
-      /*  liquidParticle->assign();*/
-    }
-    else {
-      x = newX;
-      y = newY;
-    }
+    x = newX;
+    y = newY;
   }
 
 }

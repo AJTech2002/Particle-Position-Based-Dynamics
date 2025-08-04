@@ -75,17 +75,18 @@ namespace tfn
             restColor = glm::vec3(0.0f, 0.0f, 0.0f); // Default color for empty particles
             density = 0.0f; // Default density for empty particles
           } else if (type == 1) {
-            restColor = glm::vec3(1.0f, 0.0f, 0.0f); // Solid particle color
+            /*restColor = glm::vec3(1.0f, 0.0f, 0.0f); // Solid particle color*/
+            restColor = glm::vec3(1.0, 1.0, 1.0); // Solid particle color (dark red)
             density = 1.0f; // Default density for solid particles
           } else if (type == 2) {
-            restColor = glm::vec3(0.0f, 1.0f, 0.0f); // Liquid particle color
-            density = 50.0f; // Default density for liquid particles
+            restColor = glm::vec3(0.2f, 0.2f, 0.9f); // Liquid particle color
+            density = 90.0f; // Default density for liquid particles
             friction = 0.01f; // Default friction for liquid particles 
           } else if (type == 3) {
             restColor = glm::vec3(0.2f, 0.2f, 0.2f); // Sand particle color
           restColor *= 0.8f + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 0.4f; // Randomly darken the color
             density = 100.0f;
-            friction = 5.0f; // Default friction for sand particles
+            friction = 10.0f; // Default friction for sand particles
           }
 
           // add some variation in darkness

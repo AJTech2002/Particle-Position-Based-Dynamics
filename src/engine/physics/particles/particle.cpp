@@ -123,7 +123,4 @@ void tfn::Particle::simulate(float dt)
 {
   hasUpdated = true; // Mark this particle as updated
   color = restColor; // Reset color to restColor
-
-
-
 }

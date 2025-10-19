@@ -6,7 +6,7 @@
 namespace tfn
 {
   // Amount of debug elements that can be added per frame
-  static constexpr int MAX_DEBUG_BUFFER = 200;
+  static constexpr int MAX_DEBUG_BUFFER = 20000;
 
   enum DebugShapeType {
     LINE = 0,

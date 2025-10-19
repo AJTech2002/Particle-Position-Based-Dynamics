@@ -137,7 +137,8 @@ namespace game
       simulate = false;
     }
 
-    solver.renderOnTop();
+    // solver.renderOnTop();
+    
     if (debugGrid)
       particleGrid.debug(); // Debugging grid state
     renderer.update(particleGrid.display);

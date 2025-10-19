@@ -90,8 +90,30 @@ namespace physics {
     } constraint;
   };
 
+  struct BBox {
+    glm::vec2 min;
+    glm::vec2 max;
+    glm::vec2 center() const {
+      return (min + max) * 0.5f;
+    }
+
+    BBox() : min(glm::vec2(999999.0f)), max(glm::vec2(-999999.0f)) {}
+
+    BBox(const glm::vec2 &min, const glm::vec2 &max) : min(min), max(max) {}
+
+    void expand(const glm::vec2 &point) {
+      min = glm::min(min, point);
+      max = glm::max(max, point);
+    }
+
+    bool contains(const glm::vec2 &point) const {
+      return point.x >= min.x && point.x <= max.x && point.y >= min.y && point.y <= max.y;
+    }
+  };
+
   struct SBody {
     Shape shape;
+    BBox bbox;
     std::vector<Constraint> constraints;
     std::vector<tfn::particles::SolidParticle*> particles;
   };
